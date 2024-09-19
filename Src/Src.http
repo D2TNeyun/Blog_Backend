@@ -1,0 +1,8 @@
+@Src_HostAddress = http://localhost:5273
+
+GET {{Src_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###=
+GET  http://localhost:5273/api/user/current
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0MTIzIiwianRpIjoiNWFiYjA0ODAtMzEyYS00OTlkLTlmZmUtM2Q5MTg2ZmU0M2YzIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZWlkZW50aWZpZXIiOiJlMjYyODQ5Mi04OWRjLTRjNjktOGZjOC00N2M0Yzg3YjI4ZGYiLCJleHAiOjE3MjMzNzc1OTYsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjcwMTAiLCJhdWQiOiJodHRwczovL2xvY2FsaG9zdDo3MDEwIn0.v94h-CXW6pNmDuzx_Auv0jsktrsweCixgs8CSgc85qQ
