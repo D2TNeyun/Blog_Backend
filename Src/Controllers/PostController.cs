@@ -14,7 +14,7 @@ namespace Src.Controllers
 {
     [Route("api/post")]
     [ApiController]
-    // [Authorize]
+    // [Authorize(Roles = "Admin")]
     public class PostController(PostService postService) : ControllerBase
     {
         private readonly PostService _postService = postService;
@@ -45,7 +45,7 @@ namespace Src.Controllers
             }
             catch (ArgumentException ex)
             {
-                
+
                 return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
@@ -54,7 +54,7 @@ namespace Src.Controllers
             }
         }
 
-      
+
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Post>>> GetAllPosts()
@@ -74,6 +74,43 @@ namespace Src.Controllers
             return Ok(new { post });
         }
 
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult> UpdatePost(int id, [FromForm] PostUpdateDto postUpdate, IFormFile? Image)
+        {
+            try
+            {
+                // Gọi phương thức UpdatePostAsync từ service để cập nhật bài viết
+                var updatedPost = await _postService.UpdatePostAsync(id, postUpdate, Image);
+
+                // Trả về PostDto sau khi cập nhật
+                 return Ok(new { message = "Update successfully",  updatedPost});
+            }
+            catch (ArgumentException ex)
+            {
+                // Trả về lỗi nếu không tìm thấy post 
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // Trả về lỗi chung nếu có bất kỳ vấn đề gì trong quá trình cập nhật
+                return StatusCode(500, new { message = "Error updating post: " + ex.Message });
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeletePost(int id)
+        {
+            try
+            {
+                await _postService.DeletePostAsync(id);
+                return Ok(new { message = "Delete successfully" });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 
 }

@@ -23,8 +23,6 @@ namespace Src.Dtos.Post
          public string? Description { get; set; }
         //relationship
         public CategoryDto? Category { get; set; }
-
-        public CategoryIdDto? CategoryById { get; set; }
         public TagDto? Tag { get; set; }
         public UserDto? AppUser { get; set; }
     }

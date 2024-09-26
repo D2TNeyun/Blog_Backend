@@ -260,3 +260,4 @@ E:\LuanVan\resource\Blog_Backend\Src\bin\Debug\net8.0\runtimes\win\lib\net7.0\Sy
 E:\LuanVan\resource\Blog_Backend\Src\bin\Debug\net8.0\runtimes\win\lib\net7.0\System.Windows.Extensions.dll
 E:\LuanVan\resource\Blog_Backend\Src\bin\Debug\net8.0\CloudinaryDotNet.dll
 E:\LuanVan\resource\Blog_Backend\Src\bin\Debug\net8.0\AutoMapper.dll
+E:\LuanVan\resource\Blog_Backend\Src\obj\Debug\net8.0\Src.sourcelink.json

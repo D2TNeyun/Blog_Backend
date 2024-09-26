@@ -62,7 +62,6 @@ namespace Src.Services
                 TagName = tag.TagName,
                 CategoryID = tag.CategoryID,
                 // Include other properties if needed
-                // Category = _mapper.Map<CategoryDto>(await _context.Categories.FindAsync(tag.CategoryID)),
                 Posts = _mapper.Map<List<PostDto>>(await _context.Posts.Where(p => p.TagID == tag.TagID).ToListAsync())
 
             };
@@ -70,20 +69,31 @@ namespace Src.Services
             return tagDto;
         }
 
-        public async Task<Tag?> UpdateTagAsync(int id, TagDto tagDto)
+        public async Task<Tag?> UpdateTagAsync(int id, TagUpdateDto tagUpdate)
         {
             var tag = await _context.Tags.FindAsync(id);
             if (tag == null)
             {
                 return null;
             }
-            tag.TagName = tagDto.TagName;
+            tag.TagName = tagUpdate.TagName;
 
             _context.Tags.Update(tag);
             await _context.SaveChangesAsync();
             return tag;
         }
 
+        public async Task<bool> DeleteTagAsync(int id)
+        {
+            var tag = await _context.Tags.FindAsync(id);
+            if (tag == null)
+            {
+                return false;
+            }
+            _context.Tags.Remove(tag);
+            await _context.SaveChangesAsync();
+            return true;
+        }
 
     }
 }

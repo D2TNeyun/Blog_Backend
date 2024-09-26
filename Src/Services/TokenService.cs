@@ -4,41 +4,38 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
+using Src.Models;
 
 public interface ITokenService
 {
-    string GenerateToken(string UserID, string username, IEnumerable<string> roles);
+    string GenerateToken(AppUser user, string role);
 }
 
 namespace Src.Services
 {
-    public class TokenService(IConfiguration configuration) : ITokenService
+    public class TokenService : ITokenService
     {
-        private readonly IConfiguration _configuration = configuration;
+        private readonly IConfiguration _configuration;
 
-        public string GenerateToken(string userId, string username, IEnumerable<string> roles)
+        public TokenService(IConfiguration configuration)
         {
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        }
+
+        public string GenerateToken(AppUser user, string role)
+        {
+            // Create the claims for the JWT token
             var claims = new List<Claim>
             {
-                new(JwtRegisteredClaimNames.Sub, username),
+                new(JwtRegisteredClaimNames.Email, user?.Email ?? ""),
+                new(JwtRegisteredClaimNames.GivenName, user?.UserName ?? ""),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new(ClaimTypes.NameIdentifier, userId),
+                new(ClaimTypes.Role, role)
             };
 
-            // Thêm tất cả các vai trò vào claims
-            foreach (var role in roles)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, role));
-            }
 
-            // Nếu không có vai trò nào khác, thêm vai trò "User" mặc định
-            if (!roles.Any())
-            {
-                claims.Add(new Claim(ClaimTypes.Role, "User"));
-            }
-
+            // Retrieve the signing key from configuration
             var keyString = _configuration["Jwt:SigningKey"];
             if (string.IsNullOrEmpty(keyString))
             {
@@ -47,7 +44,8 @@ namespace Src.Services
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
 
-            var token = new JwtSecurityToken(
+            // Generate the JWT token
+            var tokenDescriptor = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
@@ -55,7 +53,8 @@ namespace Src.Services
                 signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
             );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
         }
+
     }
 }

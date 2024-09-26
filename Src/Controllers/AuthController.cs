@@ -73,11 +73,11 @@ namespace Src.Controllers
                     ModelState.AddModelError(string.Empty, "Auth service is not available.");
                     return BadRequest(ModelState);
                 }
-                var (Success, Message, Token) = await _authService.LoginAsync(login);
+                var (Success, Message, Token, User) = await _authService.LoginAsync(login);
 
                 if (Success)
                 {
-                    return Ok(new { Success = true, Message = "Login Successfully!!", Token });
+                    return Ok(new { Success = true, Message = "Login Successfully!!", Token, User });
                 }
                 else
                 {

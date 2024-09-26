@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Src.Dtos.Auth;
+using Src.Dtos.User;
 using Src.Models;
 
 namespace Src.Services
@@ -76,20 +77,27 @@ namespace Src.Services
 
 
         // LOGINASYNC
-        public async Task<(bool Success, string Message, string? Token)> LoginAsync(LoginDto loginDto)
+        public async Task<(bool Success, string Message, string? Token, UserDto User)> LoginAsync(LoginDto loginDto)
         {
             var user = await _userManager.FindByNameAsync(loginDto.Username);
             if (user == null || !await _userManager.CheckPasswordAsync(user, loginDto.Password))
             {
-                return (false, "Invalid username or password.", null);
+                return (false, "Invalid username or password.", null, new UserDto());
             }
             if (user != null && await _userManager.CheckPasswordAsync(user, loginDto.Password))
             {
-                var token = _tokenService.GenerateToken(loginDto.Username, loginDto.Password, []);
-                return (true, "Login successful.", token);
+                var token = _tokenService.GenerateToken(user, (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? string.Empty);
+                var UserInfor = new UserDto
+                {
+                    Id = user.Id,
+                    Username = user.UserName ?? string.Empty,
+                    Email = user.Email ?? string.Empty,
+                    Roles = await _userManager.GetRolesAsync(user)
+                };
+                return (true, "Login successful.", token, UserInfor);
             }
 
-            return (false, "Failed to generate token.", null);
+            return (false, "Failed to generate token.", null, new UserDto());
         }
 
     }

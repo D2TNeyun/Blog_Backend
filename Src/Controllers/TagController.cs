@@ -41,14 +41,25 @@ namespace Src.Controllers
             return Ok(new { tag });
         }
         [HttpPut("{id}")]
-        public async Task<ActionResult> UpdateTag(int id,[FromForm] TagDto tagDto)
+        public async Task<ActionResult> UpdateTag(int id,[FromForm] TagUpdateDto tagUpdate)
         {
-            var UpdateTag = await _tagService.UpdateTagAsync(id, tagDto );
+            var UpdateTag = await _tagService.UpdateTagAsync(id, tagUpdate );
             if(UpdateTag == null)
             {
                 return NotFound();
             }
             return Ok(UpdateTag);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteTag(int id)
+        {
+            var tag = await _tagService.DeleteTagAsync(id);
+            if (!tag)
+            {
+                return NotFound();
+            }
+            return Ok(new { message = "Tag deleted successfully" });
         }
     }
 }

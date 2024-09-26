@@ -54,9 +54,6 @@ namespace Src.Services
 
             try
             {
-                // Lưu thay đổi vào cơ sở dữ liệu
-                await _context.SaveChangesAsync();
-
                 // Nếu có ảnh, tải ảnh lên Cloudinary
                 if (image != null)
                 {
@@ -78,6 +75,9 @@ namespace Src.Services
                     post.Image = uploadResult.SecureUrl.AbsoluteUri;
                     await _context.SaveChangesAsync();
                 }
+                // Lưu thay đổi vào cơ sở dữ liệu
+                await _context.SaveChangesAsync();
+
                 // Trả về PostDto thay vì đối tượng Post đầy đủ
                 var createdPostDto = _mapper.Map<PostDto>(post);
                 return createdPostDto;
@@ -102,7 +102,7 @@ namespace Src.Services
             var postDtos = new List<PostDto>();
             foreach (var post in posts)
             {
-                var postDto = new PostDto
+                postDtos.Add(new PostDto
                 {
                     PostID = post.PostID,
                     AppUserID = post.AppUserID ?? throw new ArgumentNullException(nameof(post.AppUserID)),
@@ -113,13 +113,8 @@ namespace Src.Services
                     Content = post.Content,
                     PublishedDate = post.PublishedDate,
                     Views = post.Views,
-                    Image = post.Image,
-                    AppUser = _mapper.Map<UserDto>(await _userManager.FindByIdAsync(post.AppUserID)),
-                    Category = _mapper.Map<CategoryDto>(await _context.Categories.FindAsync(post.CategoryID)),
-                    Tag = _mapper.Map<TagDto>(await _context.Tags.FindAsync(post.TagID))
-                };
-
-                postDtos.Add(postDto);
+                    Image = post.Image
+                });
             }
 
             return postDtos;
@@ -137,7 +132,7 @@ namespace Src.Services
             var postDto = new PostDto
             {
                 PostID = post.PostID,
-                AppUserID = post.AppUserID?? throw new ArgumentNullException(nameof(post.AppUserID)),
+                AppUserID = post.AppUserID ?? throw new ArgumentNullException(nameof(post.AppUserID)),
                 CategoryID = post.CategoryID,
                 TagID = post.TagID,
                 Title = post.Title,
@@ -152,6 +147,84 @@ namespace Src.Services
             };
 
             return postDto;
+        }
+
+        public async Task<PostDto> UpdatePostAsync(int postId, PostUpdateDto postDto, IFormFile? image)
+        {
+            // Tìm post cần cập nhật
+            var post = await _context.Posts.FindAsync(postId);
+            if (post == null)
+            {
+                throw new ArgumentException("Post not found.");
+            }
+
+            // Cập nhật các trường thông tin post
+            post.CategoryID = postDto.CategoryID;
+            post.TagID = postDto.TagID;
+            post.Title = postDto.Title;
+            post.Description = postDto.Description;
+            post.Content = postDto.Content;
+
+            try
+            {
+                // Nếu có ảnh mới, tải ảnh lên Cloudinary
+                if (image != null)
+                {
+                    // Xóa ảnh cũ trên Cloudinary nếu tồn tại
+                    if (!string.IsNullOrEmpty(post.Image))
+                    {
+                        await _cloudinary.DeleteUploadMappingAsync(post.Image.Split('/').Last());
+                    }
+
+                    var uploadResult = new ImageUploadResult();
+
+                    using (var stream = image.OpenReadStream())
+                    {
+                        var uploadParams = new ImageUploadParams()
+                        {
+                            File = new FileDescription(image.FileName, stream),
+                            Folder = "BlogProject",
+                            Transformation = new Transformation().Width(500).Height(500).Crop("fill").Gravity("center")
+                        };
+
+                        uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                    }
+
+                    // Lưu đường dẫn ảnh mới vào cơ sở dữ liệu
+                    post.Image = uploadResult.SecureUrl.AbsoluteUri;
+                }
+
+                // Lưu thay đổi vào cơ sở dữ liệu
+                await _context.SaveChangesAsync();
+
+                // Trả về PostDto sau khi cập nhật
+                var updatedPostDto = _mapper.Map<PostDto>(post);
+                return updatedPostDto;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error updating post: " + ex.Message);
+            }
+        }
+
+
+        public async Task DeletePostAsync(int postId)
+        {
+            // Tìm post cần xóa
+            var post = await _context.Posts.FindAsync(postId);
+            if (post == null)
+            {
+                throw new ArgumentException("Post not found.");
+            }
+            // Xóa ảnh trên Cloudinary nếu tồn tại
+            if (!string.IsNullOrEmpty(post.Image))
+            {
+                await _cloudinary.DeleteUploadMappingAsync(post.Image.Split('/').Last());
+            }
+            // Xóa post vào cơ sở dữ liệu
+            _context.Posts.Remove(post);
+            await _context.SaveChangesAsync();
+            return;
         }
     }
 
