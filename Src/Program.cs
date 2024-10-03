@@ -36,7 +36,9 @@ builder.Services.AddSwaggerGen();
 //config SQL Server
 builder.Services.AddDbContext<ApplicationDBContext>(option =>
 {
-    option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+        .EnableSensitiveDataLogging()
+        .LogTo(Console.WriteLine, LogLevel.Information);
 });
 
 //config Identity 
@@ -144,6 +146,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<TagService>();
 builder.Services.AddScoped<PostService>();
+builder.Services.AddScoped<CommentService>();
 builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 

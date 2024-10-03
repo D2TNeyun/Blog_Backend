@@ -51,19 +51,19 @@ namespace Src.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "9d83db27-4400-4a51-bcb2-adec6c491beb",
+                            Id = "e4413de9-3433-4e30-9c5c-9c79567981ae",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "bc4a0b26-09da-494e-a8ec-c4830e036ce5",
+                            Id = "a6e8fcde-c05e-48b7-a672-316785c5750c",
                             Name = "User",
                             NormalizedName = "USER"
                         },
                         new
                         {
-                            Id = "39bfc8b4-99a2-46a6-8186-d6f1725d34bc",
+                            Id = "1ad48c91-0986-4e31-a1cf-514d489d6e95",
                             Name = "Employee",
                             NormalizedName = "EMPLOYEE"
                         });
@@ -259,23 +259,30 @@ namespace Src.Migrations
 
             modelBuilder.Entity("Src.Models.Comment", b =>
                 {
+                    b.Property<int>("CommentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CommentId"));
+
+                    b.Property<string>("AppUserID")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("PostId")
                         .HasColumnType("int");
 
-                    b.Property<string>("AppUserID")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("CommentId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Content")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("PostId", "AppUserID", "CommentId");
+                    b.HasKey("CommentId");
 
                     b.HasIndex("AppUserID");
 
-                    b.ToTable("Comment");
+                    b.HasIndex("PostId");
+
+                    b.ToTable("Comments");
                 });
 
             modelBuilder.Entity("Src.Models.Post", b =>
@@ -408,9 +415,7 @@ namespace Src.Migrations
 
                     b.HasOne("Src.Models.Post", "Post")
                         .WithMany("Comments")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("PostId");
 
                     b.Navigation("AppUser");
 

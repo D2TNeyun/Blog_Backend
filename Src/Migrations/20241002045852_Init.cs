@@ -200,6 +200,7 @@ namespace Src.Migrations
                     CategoryID = table.Column<int>(type: "int", nullable: true),
                     TagID = table.Column<int>(type: "int", nullable: true),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Content = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     PublishedDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "getutcdate()"),
                     Image = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -226,29 +227,29 @@ namespace Src.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Comment",
+                name: "Comments",
                 columns: table => new
                 {
-                    CommentId = table.Column<int>(type: "int", nullable: false),
+                    CommentId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     AppUserID = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    PostId = table.Column<int>(type: "int", nullable: false),
-                    Content = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    PostId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Comment", x => new { x.PostId, x.AppUserID, x.CommentId });
+                    table.PrimaryKey("PK_Comments", x => x.CommentId);
                     table.ForeignKey(
-                        name: "FK_Comment_AspNetUsers_AppUserID",
+                        name: "FK_Comments_AspNetUsers_AppUserID",
                         column: x => x.AppUserID,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Comment_Posts_PostId",
+                        name: "FK_Comments_Posts_PostId",
                         column: x => x.PostId,
                         principalTable: "Posts",
-                        principalColumn: "PostID",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "PostID");
                 });
 
             migrationBuilder.InsertData(
@@ -256,9 +257,9 @@ namespace Src.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "11f75b96-eee9-443b-90b0-fb30132415df", null, "User", "USER" },
-                    { "2ea47739-03af-41c0-9458-fbec2061dac9", null, "Admin", "ADMIN" },
-                    { "a4546d5e-1ad7-4ba3-8aed-a79135cd5cfc", null, "Employee", "EMPLOYEE" }
+                    { "1ad48c91-0986-4e31-a1cf-514d489d6e95", null, "Employee", "EMPLOYEE" },
+                    { "a6e8fcde-c05e-48b7-a672-316785c5750c", null, "User", "USER" },
+                    { "e4413de9-3433-4e30-9c5c-9c79567981ae", null, "Admin", "ADMIN" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -301,9 +302,14 @@ namespace Src.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Comment_AppUserID",
-                table: "Comment",
+                name: "IX_Comments_AppUserID",
+                table: "Comments",
                 column: "AppUserID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Comments_PostId",
+                table: "Comments",
+                column: "PostId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Posts_AppUserID",
@@ -345,7 +351,7 @@ namespace Src.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Comment");
+                name: "Comments");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

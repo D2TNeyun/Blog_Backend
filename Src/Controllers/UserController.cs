@@ -90,19 +90,19 @@ namespace Src.Controllers
             }
         }
 
-        // [HttpDelete("{id}")]
-        // public async Task<IActionResult> DeleteUser(string id)
-        // {
-        //     var user = await _userManager.FindByIdAsync(id);
-        //     if (user == null)
-        //     {
-        //         return NotFound("User not found");
-        //     }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUser(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
 
-        //     await _userManager.DeleteAsync(user);
-        //     await _userService.DeleteUserAsync(id);
-        //     return Ok(new { message = "User deleted successfully" });
-        // }
+            await _userManager.DeleteAsync(user);
+            await _userService.DeleteUserAsync(id);
+            return Ok(new { message = "User deleted successfully" });
+        }
 
     }
 }

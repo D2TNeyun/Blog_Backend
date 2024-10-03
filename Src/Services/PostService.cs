@@ -113,7 +113,11 @@ namespace Src.Services
                     Content = post.Content,
                     PublishedDate = post.PublishedDate,
                     Views = post.Views,
-                    Image = post.Image
+                    Image = post.Image,
+                    AppUser = _mapper.Map<UserDto>(await _userManager.FindByIdAsync(post.AppUserID)),
+                    Category = _mapper.Map<CategoryDto>(await _context.Categories.FindAsync(post.CategoryID)),
+                    Tag = _mapper.Map<TagDto>(await _context.Tags.FindAsync(post.TagID))
+
                 });
             }
 

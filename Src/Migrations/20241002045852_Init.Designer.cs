@@ -12,7 +12,7 @@ using Src.Data;
 namespace Src.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20240824083810_Init")]
+    [Migration("20241002045852_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -54,19 +54,19 @@ namespace Src.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "2ea47739-03af-41c0-9458-fbec2061dac9",
+                            Id = "e4413de9-3433-4e30-9c5c-9c79567981ae",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "11f75b96-eee9-443b-90b0-fb30132415df",
+                            Id = "a6e8fcde-c05e-48b7-a672-316785c5750c",
                             Name = "User",
                             NormalizedName = "USER"
                         },
                         new
                         {
-                            Id = "a4546d5e-1ad7-4ba3-8aed-a79135cd5cfc",
+                            Id = "1ad48c91-0986-4e31-a1cf-514d489d6e95",
                             Name = "Employee",
                             NormalizedName = "EMPLOYEE"
                         });
@@ -262,23 +262,30 @@ namespace Src.Migrations
 
             modelBuilder.Entity("Src.Models.Comment", b =>
                 {
+                    b.Property<int>("CommentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CommentId"));
+
+                    b.Property<string>("AppUserID")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("PostId")
                         .HasColumnType("int");
 
-                    b.Property<string>("AppUserID")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("CommentId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Content")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("PostId", "AppUserID", "CommentId");
+                    b.HasKey("CommentId");
 
                     b.HasIndex("AppUserID");
 
-                    b.ToTable("Comment");
+                    b.HasIndex("PostId");
+
+                    b.ToTable("Comments");
                 });
 
             modelBuilder.Entity("Src.Models.Post", b =>
@@ -296,6 +303,9 @@ namespace Src.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Content")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Image")
@@ -408,9 +418,7 @@ namespace Src.Migrations
 
                     b.HasOne("Src.Models.Post", "Post")
                         .WithMany("Comments")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("PostId");
 
                     b.Navigation("AppUser");
 

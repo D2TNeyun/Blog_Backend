@@ -112,5 +112,23 @@ namespace Src.Services
             return result.Succeeded ? (true, "User updated successfully.") : (false, "Failed to update user.");
         }
 
+        public async Task<(bool Success, string Message)> DeleteUserAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return (false, "User not found.");
+            }
+            // // Check if the user has any posts
+            // var posts = await _userManager.GetUsersWithPostsAsync().Where(u => u.Id == userId).ToListAsync();
+            // if (posts.Count > 0)
+            // {
+            //     return (false, "User has posts. Cannot delete user.");
+            // }
+            // Attempt to delete the user
+            var result = await _userManager.DeleteAsync(user);
+            return result.Succeeded? (true, "User deleted successfully.") : (false, "Failed to delete user.");
+        }
+
     }
 }

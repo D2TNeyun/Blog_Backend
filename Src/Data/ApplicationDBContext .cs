@@ -10,6 +10,7 @@ namespace Src.Data
         public DbSet<Post> Posts { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Tag> Tags { get; set; }
+        public DbSet<Comment> Comments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -37,8 +38,8 @@ namespace Src.Data
 
             modelBuilder.Entity<Comment>(e =>
             {
-                e.HasKey(cmt => new { cmt.PostId, cmt.AppUserID, cmt.CommentId });
-
+                e.HasKey(cmt => new { cmt.CommentId });
+                
                 e.HasOne(cmt => cmt.Post)
                    .WithMany(p => p.Comments)
                    .HasForeignKey(cmt => cmt.PostId);
@@ -57,7 +58,9 @@ namespace Src.Data
     
             });
 
-            List<IdentityRole> roles = new List<IdentityRole>
+            
+
+            List<IdentityRole> roles = new()
             {
                 new IdentityRole {Name = "Admin", NormalizedName = "ADMIN" },
                 new IdentityRole {Name = "User", NormalizedName = "USER" },
