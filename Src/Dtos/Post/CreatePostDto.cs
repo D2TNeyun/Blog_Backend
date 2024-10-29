@@ -10,7 +10,7 @@ namespace Src.Dtos.Post
         public string AppUserID { get; set; } = string.Empty;
         public int CategoryID { get; set; }
         public int TagID { get; set; } 
-        public string? Title { get; set; }
+        public string Title { get; set; }  = string.Empty; 
         public string? Description { get; set; }
         public string? Content { get; set; }
         public required IFormFile Image { get; set; }

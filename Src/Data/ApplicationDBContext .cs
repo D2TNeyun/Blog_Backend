@@ -11,6 +11,7 @@ namespace Src.Data
         public DbSet<Category> Categories { get; set; }
         public DbSet<Tag> Tags { get; set; }
         public DbSet<Comment> Comments { get; set; }
+        public DbSet<Actives> Actives { get; set;}
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -58,7 +59,13 @@ namespace Src.Data
     
             });
 
-            
+            modelBuilder.Entity<Actives>(e =>
+            {
+                e.HasKey(a => a.ActivesID);
+                e.HasOne(a => a.AppUser)
+                   .WithMany(u => u.IsActive)
+                   .HasForeignKey(a => a.AppUserID);
+            });
 
             List<IdentityRole> roles = new()
             {

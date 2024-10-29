@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Src.Data;
 using Src.Dtos.Category;
+using Src.Dtos.Comment;
 using Src.Dtos.Post;
 using Src.Dtos.Tag;
 using Src.Dtos.User;
@@ -96,9 +97,13 @@ namespace Src.Services
             }
         }
 
-        public async Task<IEnumerable<PostDto>> GetAllPostsAsync()
+        public async Task<IEnumerable<PostDto>> GetAllPostsAsync(PostQuery postQuery)
         {
             var posts = await _context.Posts.ToListAsync();
+            if (!string.IsNullOrWhiteSpace(postQuery.Title))
+            {
+                posts = posts.Where(p => p.Title.ToLower().Contains(postQuery.Title.ToLower())).ToList();
+            }
             var postDtos = new List<PostDto>();
             foreach (var post in posts)
             {
@@ -117,6 +122,7 @@ namespace Src.Services
                     AppUser = _mapper.Map<UserDto>(await _userManager.FindByIdAsync(post.AppUserID)),
                     Category = _mapper.Map<CategoryDto>(await _context.Categories.FindAsync(post.CategoryID)),
                     Tag = _mapper.Map<TagDto>(await _context.Tags.FindAsync(post.TagID))
+
 
                 });
             }
@@ -147,7 +153,9 @@ namespace Src.Services
                 Image = post.Image,
                 AppUser = _mapper.Map<UserDto>(await _userManager.FindByIdAsync(post.AppUserID)),
                 Category = _mapper.Map<CategoryDto>(await _context.Categories.FindAsync(post.CategoryID)),
-                Tag = _mapper.Map<TagDto>(await _context.Tags.FindAsync(post.TagID))
+                Tag = _mapper.Map<TagDto>(await _context.Tags.FindAsync(post.TagID)),
+                // Comments = _mapper.Map<CommentsDto>(await _context.Comments.FindAsync(post.Comments)),//-
+                Comments = _mapper.Map<List<CommentsDto>>(await _context.Comments.Where(c => c.PostId == post.PostID).ToListAsync()),//+
             };
 
             return postDto;

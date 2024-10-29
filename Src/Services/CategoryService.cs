@@ -21,6 +21,15 @@ namespace Src.Services
 
         public async Task<Category> CreateCategoryAsync(createCategoryDto createCategoryDto)
         {
+            // Kiểm tra xem danh mục đã tồn tại hay chưa
+            var existingCategory = await _context.Categories
+                .FirstOrDefaultAsync(c => c.CategoryName == createCategoryDto.CategoryName);
+
+            if (existingCategory != null)
+            {
+                throw new InvalidOperationException("Danh mục với tên này đã tồn tại.");
+            }
+            
             var category = new Category
             {
                 CategoryName = createCategoryDto.CategoryName
@@ -35,7 +44,7 @@ namespace Src.Services
         {
             var categories = await _context.Categories
                 .Include(c => c.Tags) // Bao gồm các Tag liên quan
-                // .Include(c => c.Posts)  // Bao gồm bảng Post
+                                      // .Include(c => c.Posts)  // Bao gồm bảng Post
                 .ToListAsync();
             return _mapper.Map<List<CategoryDto>>(categories);
         }
@@ -43,16 +52,16 @@ namespace Src.Services
         public async Task<CategoryDto?> GetCategoryByIdAsync(int id)
         {
             var category = await _context.Categories
-                    .Include(c => c.Tags)  
-                    .Include(c => c.Posts)  
+                    .Include(c => c.Tags)
+                    .Include(c => c.Posts)
                     .FirstOrDefaultAsync(c => c.CategoryID == id);
-                    // .ToListAsync();
+            // .ToListAsync();
             if (category == null)
             {
                 return null;
             }
 
-            var categoryDto = _mapper.Map<CategoryDto>(category);   
+            var categoryDto = _mapper.Map<CategoryDto>(category);
 
             return categoryDto;
         }

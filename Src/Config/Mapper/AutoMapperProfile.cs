@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Src.Dtos.Category;
+using Src.Dtos.Comment;
 using Src.Dtos.Post;
 using Src.Dtos.Tag;
 using Src.Dtos.User;
@@ -19,12 +20,14 @@ namespace Src.Config.Mapper
             CreateMap<Post, PostDto>()
                 .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))
                 .ForMember(dest => dest.Tag, opt => opt.MapFrom(src => src.Tag))
-                .ForMember(dest => dest.AppUser, opt => opt.MapFrom(src => src.AppUser));
+                .ForMember(dest => dest.AppUser, opt => opt.MapFrom(src => src.AppUser))
+                .ForMember(dest => dest.Comments, opt => opt.MapFrom(src => src.Comments));
 
-            CreateMap<PostDto, Post>()
-                .ForMember(dest => dest.Category, opt => opt.Ignore())
-                .ForMember(dest => dest.Tag, opt => opt.Ignore())
-                .ForMember(dest => dest.AppUser, opt => opt.Ignore());
+            // CreateMap<PostDto, Post>()
+            //     .ForMember(dest => dest.Category, opt => opt.Ignore())
+            //     .ForMember(dest => dest.Tag, opt => opt.Ignore())
+            //     .ForMember(dest => dest.AppUser, opt => opt.Ignore());
+
 
             // Category Mapping
             CreateMap<Category, CategoryDto>()
@@ -50,6 +53,13 @@ namespace Src.Config.Mapper
             // User Mapping
             CreateMap<AppUser, UserDto>();
             CreateMap<UserDto, AppUser>();
+
+            // Comment Mapping
+            CreateMap<Comment, CommentsDto>()
+               .ForMember(dest => dest.AppUser, opt => opt.MapFrom(src => src.AppUser))
+                .ForMember(dest => dest.Post, opt => opt.MapFrom(src => src.Post));
+            CreateMap<CommentsDto, Comment>()
+               .ForMember(dest => dest.AppUser, opt => opt.Ignore());
         }
     }
 }

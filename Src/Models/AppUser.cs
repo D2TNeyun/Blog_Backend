@@ -9,5 +9,6 @@ namespace Src.Models
     public class AppUser : IdentityUser
     {
         public List<Comment> Comments { get; set; } = new List<Comment>();
+        public  ICollection<Actives>?  IsActive { get; set; }
     }
 }

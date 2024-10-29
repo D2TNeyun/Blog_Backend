@@ -7,31 +7,41 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Src.Data;
 using Src.Dtos.User;
 using Src.Models;
 
 
 namespace Src.Services
 {
-    public class UserService(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager)
+    public class UserService(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, ApplicationDBContext Context)
     {
         private readonly UserManager<AppUser> _userManager = userManager;
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
+        private readonly ApplicationDBContext _context = Context;
 
 
         public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
         {
             var users = await _userManager.Users.ToListAsync();
             var userWithRolesList = new List<UserDto>();
+            // var IsActives = new List<
             foreach (var user in users)
             {
                 var userRoles = await _userManager.GetRolesAsync(user);
+
+                var activeStatus = await _context.Actives
+                    .Where(a => a.AppUserID == user.Id && a.StatusName != null)  // Thêm điều kiện để loại bỏ giá trị null
+                    .Select(a => a.StatusName!)
+                    .ToListAsync();
+
                 userWithRolesList.Add(new UserDto
                 {
                     Id = user.Id,
                     Username = user.UserName ?? string.Empty,
                     Email = user.Email ?? string.Empty,
-                    Roles = userRoles ?? throw new ArgumentNullException(nameof(userWithRolesList))
+                    Roles = userRoles ?? throw new ArgumentNullException(nameof(userWithRolesList)),
+                    IsActives = activeStatus
                 });
             }
             return userWithRolesList;
@@ -106,6 +116,29 @@ namespace Src.Services
                     return (false, "Role not found.");
                 }
             }
+            // Update active status if provided
+            if (!string.IsNullOrEmpty(updateUser.StatusName))
+            {
+                // Tìm trạng thái hoạt động hiện tại
+                var activeEntry = await _context.Actives
+                    .FirstOrDefaultAsync(a => a.AppUserID == user.Id);
+
+                if (activeEntry != null)
+                {
+                    activeEntry.StatusName = updateUser.StatusName;
+                }
+                else
+                {
+                    // Nếu không có trạng thái hoạt động, có thể tạo mới
+                    activeEntry = new Actives
+                    {
+                        AppUserID = user.Id,
+                        StatusName = updateUser.StatusName,
+                        // Avata = "default_avatar.png" // Giá trị mặc định cho Avatar (nếu cần)
+                    };
+                    await _context.Actives.AddAsync(activeEntry);
+                }
+            }
 
             // Attempt to update the user
             var result = await _userManager.UpdateAsync(user);
@@ -127,7 +160,7 @@ namespace Src.Services
             // }
             // Attempt to delete the user
             var result = await _userManager.DeleteAsync(user);
-            return result.Succeeded? (true, "User deleted successfully.") : (false, "Failed to delete user.");
+            return result.Succeeded ? (true, "User deleted successfully.") : (false, "Failed to delete user.");
         }
 
     }

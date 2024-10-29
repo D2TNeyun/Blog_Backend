@@ -10,17 +10,19 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Src.Data;
 using Src.Dtos.Auth;
 using Src.Dtos.User;
 using Src.Models;
 
 namespace Src.Services
 {
-    public class AuthService(UserManager<AppUser> userManager, IConfiguration configuration, ITokenService tokenService)
+    public class AuthService(UserManager<AppUser> userManager, IConfiguration configuration, ITokenService tokenService, ApplicationDBContext Context)
     {
         private readonly UserManager<AppUser> _userManager = userManager;
         private readonly IConfiguration _configuration = configuration;
         private readonly ITokenService _tokenService = tokenService;
+        private readonly ApplicationDBContext _context = Context;
 
         // // REGISTERASYNC
         public async Task<RegistrationResultDto> RegisterAsync(RegisterDto registerDto)
@@ -59,7 +61,15 @@ namespace Src.Services
                     Message = $"Failed to assign role to user: {string.Join(", ", roleResult.Errors.Select(e => e.Description))}"
                 };
             }
+            // Tạo trạng thái hoạt động mặc định cho người dùng mới
+            var active = new Actives
+            {
+                AppUserID = user.Id,
+                StatusName = "Y",  // Trạng thái mặc định là "Y"
+            };
 
+            _context.Actives.Add(active);
+            await _context.SaveChangesAsync();
             // Tạo token xác nhận email
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             return new RegistrationResultDto
@@ -87,13 +97,21 @@ namespace Src.Services
             if (user != null && await _userManager.CheckPasswordAsync(user, loginDto.Password))
             {
                 var token = _tokenService.GenerateToken(user, (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? string.Empty);
+                // Lấy thông tin trạng thái active của người dùng
+                var activeStatus = await _context.Actives
+                    .Where(a => a.AppUserID == user.Id && a.StatusName != null)  
+                    .Select(a => a.StatusName!)
+                    .ToListAsync();
+
                 var UserInfor = new UserDto
                 {
                     Id = user.Id,
                     Username = user.UserName ?? string.Empty,
                     Email = user.Email ?? string.Empty,
-                    Roles = await _userManager.GetRolesAsync(user)
+                    Roles = await _userManager.GetRolesAsync(user),
+                    IsActives = activeStatus
                 };
+
                 return (true, "Login successful.", token, UserInfor);
             }
 

@@ -2,42 +2,27 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Src.Data;
 using Src.Dtos.Comment;
+using Src.Dtos.User;
 using Src.Models;
 
 namespace Src.Services
 {
-    public class CommentService(ApplicationDBContext context, UserManager<AppUser> userManager)
+    public class CommentService(ApplicationDBContext context, UserManager<AppUser> userManager, IMapper mapper)
     {
         private readonly ApplicationDBContext _context = context;
         private readonly UserManager<AppUser> _userManager = userManager;
-
-        // public async Task<Comment> CreateCommentAsync(CreateCommentDto createCommentDto)
-        // {
-        //     var user = await _userManager.FindByIdAsync(createCommentDto.UserID);
-        //     var post = await _context.Posts.FindAsync(createCommentDto.PostID);
-
-        //     if (user == null || post == null)
-        //     {
-        //         throw new InvalidOperationException("User or post not found.");
-        //     }
-
-        //     var comment = new Comment
-        //     {
-        //         Content = createCommentDto.Content,
-        //         User = user,
-        //         Post = post,
-        //         // CreatedAt = DateTime.Now
-        //     }
-
-        // }
+        private readonly IMapper _mapper = mapper;
 
         public async Task<IEnumerable<CommentsDto>> GetAllCmtAsync()
         {
-            var comments = await _context.Comments.ToListAsync();
+            var comments = await _context.Comments
+            .Include(c => c.AppUser)
+            .ToListAsync();
             var commentsDtos = new List<CommentsDto>();
             foreach (var comment in comments)
             {
@@ -47,6 +32,7 @@ namespace Src.Services
                     AppUserID = comment.AppUserID ?? throw new ArgumentNullException(nameof(comment.AppUserID)),
                     PostId = comment.PostId,
                     Content = comment.Content,
+                    AppUser = _mapper.Map<UserDto>(await _userManager.FindByIdAsync(comment.AppUserID)),
                 });
             }
 

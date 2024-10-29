@@ -41,8 +41,19 @@ namespace Src.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateCategory([FromForm] createCategoryDto createCategoryDto)
         {
-            var category = await _categoryService.CreateCategoryAsync(createCategoryDto);
-            return Ok(category);
+            try
+            {
+                var category = await _categoryService.CreateCategoryAsync(createCategoryDto);
+                return Ok(category);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message); 
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Đã xảy ra lỗi trong quá trình tạo danh mục."); 
+            }
         }
 
         [HttpPut("{id}")]

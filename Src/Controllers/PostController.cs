@@ -37,7 +37,7 @@ namespace Src.Controllers
                     Description = createPostDto.Description,
                     Title = createPostDto.Title,
                     Content = createPostDto.Content,
-                    PublishedDate = DateTime.UtcNow,
+                    PublishedDate = DateTime.Now,
                     Views = 0
                 };
                 var createdPost = await _postService.CreatePostAsync(postDto, createPostDto.Image);
@@ -57,9 +57,9 @@ namespace Src.Controllers
 
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Post>>> GetAllPosts()
+        public async Task<ActionResult<IEnumerable<Post>>> GetAllPosts([FromQuery] PostQuery postQuery)
         {
-            var posts = await _postService.GetAllPostsAsync();
+            var posts = await _postService.GetAllPostsAsync(postQuery);
             return Ok(new { posts });
         }
 
