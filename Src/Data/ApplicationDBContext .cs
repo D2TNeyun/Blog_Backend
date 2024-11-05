@@ -43,7 +43,8 @@ namespace Src.Data
                 
                 e.HasOne(cmt => cmt.Post)
                    .WithMany(p => p.Comments)
-                   .HasForeignKey(cmt => cmt.PostId);
+                   .HasForeignKey(cmt => cmt.PostId)
+                   .OnDelete(DeleteBehavior.Cascade); // Thiết lập hành động xóa chuỗi
 
                 e.HasOne(cmt => cmt.AppUser)
                    .WithMany(u => u.Comments)

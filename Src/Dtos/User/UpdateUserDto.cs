@@ -8,12 +8,10 @@ namespace Src.Dtos.User
 {
     public class UpdateUserDto
     {
-        public string? UserName { get; set; } 
-        public string? Email { get; set; } 
-        public string? RoleID { get; set; }
-        public string? StatusName { get; set; }
-        
-        //
+        public string UserName { get; set; }  = string.Empty;
+        public string Email { get; set; }  = string.Empty;
+        public string Role  { get; set; }  = string.Empty;
+        public string StatusName { get; set; }  = string.Empty;
 
     }
 }

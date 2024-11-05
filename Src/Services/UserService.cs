@@ -21,17 +21,22 @@ namespace Src.Services
         private readonly ApplicationDBContext _context = Context;
 
 
-        public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
+        public async Task<IEnumerable<UserDto>> GetAllUsersAsync(UserQuery userQuery)
         {
             var users = await _userManager.Users.ToListAsync();
+            if (!string.IsNullOrWhiteSpace(userQuery.UserName))
+            {
+                users = users
+                    .Where(u => (u.UserName ?? string.Empty).ToLower().Contains(userQuery.UserName.ToLower()))
+                    .ToList();
+            }
             var userWithRolesList = new List<UserDto>();
-            // var IsActives = new List<
             foreach (var user in users)
             {
                 var userRoles = await _userManager.GetRolesAsync(user);
 
                 var activeStatus = await _context.Actives
-                    .Where(a => a.AppUserID == user.Id && a.StatusName != null)  // Thêm điều kiện để loại bỏ giá trị null
+                    .Where(a => a.AppUserID == user.Id && a.StatusName != null)
                     .Select(a => a.StatusName!)
                     .ToListAsync();
 
@@ -56,15 +61,19 @@ namespace Src.Services
             }
 
             var roles = await _userManager.GetRolesAsync(user);
+            var activeStatus = await _context.Actives
+                    .Where(a => a.AppUserID == user.Id && a.StatusName != null)
+                    .Select(a => a.StatusName!)
+                    .ToListAsync();
             return new UserDto
             {
                 Id = user.Id,
                 Username = user.UserName ?? string.Empty,
                 Email = user.Email ?? string.Empty,
-                Roles = roles
+                Roles = roles,
+                IsActives = activeStatus
             };
         }
-
 
 
         public async Task<(bool Success, string Message)> UpdateUserAsync(string userId, UpdateUserDto updateUser)
@@ -75,76 +84,90 @@ namespace Src.Services
                 return (false, "User not found.");
             }
 
-            // Check if username or email already exists
-            var existingUsers = await _userManager.Users
-                .Where(u => u.Id != userId && (u.UserName == updateUser.UserName || u.Email == updateUser.Email))
-                .ToArrayAsync();
-
-            foreach (var existingUser in existingUsers)
+            // Check if username or email already exists only if they are being changed
+            if (!string.IsNullOrEmpty(updateUser.UserName) && updateUser.UserName != user.UserName)
             {
-                if (existingUser.UserName == updateUser.UserName)
+                var existingUser = await _userManager.Users
+                    .FirstOrDefaultAsync(u => u.UserName == updateUser.UserName);
+
+                if (existingUser != null)
                 {
                     return (false, "Username already exists.");
-                }
-                if (existingUser.Email == updateUser.Email)
-                {
-                    return (false, "Email already exists.");
+                } else {
+                    user.UserName = updateUser.UserName;
                 }
             }
 
-            // Update username and email if provided
-            user.UserName = updateUser.UserName ?? user.UserName;
-            user.Email = updateUser.Email ?? user.Email;
+            if (!string.IsNullOrEmpty(updateUser.Email) && updateUser.Email != user.Email)
+            {
+                var existingUser = await _userManager.Users
+                    .FirstOrDefaultAsync(u => u.Email == updateUser.Email);
+
+                if (existingUser != null)
+                {
+                    return (false, "Email already exists.");
+                } else {
+                    user.Email = updateUser.Email;
+                }
+            }
+
+         
 
             // Update role if provided
-            if (!string.IsNullOrEmpty(updateUser.RoleID))
+            if (!string.IsNullOrEmpty(updateUser.Role))
             {
-                var newRole = await _roleManager.FindByIdAsync(updateUser.RoleID);
+                var newRole = await _roleManager.FindByNameAsync(updateUser.Role);
                 if (newRole != null) // Ensure newRole is found
                 {
-                    if (string.IsNullOrEmpty(newRole.Name)) // Check if role name is null or empty
-                    {
-                        return (false, "Role name is missing.");
-                    }
-
                     var currentRoles = await _userManager.GetRolesAsync(user);
-                    await _userManager.RemoveFromRolesAsync(user, currentRoles); // Remove all current roles
-                    await _userManager.AddToRoleAsync(user, newRole.Name);        // Add the new role by name
+                    if (!currentRoles.Contains(newRole.Name ?? string.Empty)) // Check if role is different
+                    {
+                        await _userManager.RemoveFromRolesAsync(user, currentRoles);
+                        await _userManager.AddToRoleAsync(user, newRole.Name ?? string.Empty);
+                    }
                 }
                 else
                 {
                     return (false, "Role not found.");
                 }
             }
+
             // Update active status if provided
             if (!string.IsNullOrEmpty(updateUser.StatusName))
-            {
-                // Tìm trạng thái hoạt động hiện tại
-                var activeEntry = await _context.Actives
-                    .FirstOrDefaultAsync(a => a.AppUserID == user.Id);
+                // Update active status if provided
+                if (!string.IsNullOrEmpty(updateUser.StatusName))
+                {
+                    // Check if an active entry exists
+                    var activeEntry = await _context.Actives
+                        .FirstOrDefaultAsync(a => a.AppUserID == user.Id);
 
-                if (activeEntry != null)
-                {
-                    activeEntry.StatusName = updateUser.StatusName;
-                }
-                else
-                {
-                    // Nếu không có trạng thái hoạt động, có thể tạo mới
-                    activeEntry = new Actives
+                    if (activeEntry != null)
                     {
-                        AppUserID = user.Id,
-                        StatusName = updateUser.StatusName,
-                        // Avata = "default_avatar.png" // Giá trị mặc định cho Avatar (nếu cần)
-                    };
-                    await _context.Actives.AddAsync(activeEntry);
+                        activeEntry.StatusName = updateUser.StatusName;
+                    }
+                    else
+                    {
+                        // Create a new active status if none exists
+                        activeEntry = new Actives
+                        {
+                            AppUserID = user.Id,
+                            StatusName = updateUser.StatusName,
+                        };
+                        await _context.Actives.AddAsync(activeEntry);
+                    }
+                    _context.Actives.Update(activeEntry);
                 }
-            }
 
             // Attempt to update the user
             var result = await _userManager.UpdateAsync(user);
-            return result.Succeeded ? (true, "User updated successfully.") : (false, "Failed to update user.");
-        }
+            if (!result.Succeeded)
+            {
+                return (false, "Failed to update user.");
+            }
 
+            await _context.SaveChangesAsync();
+            return (true, "User updated successfully.");
+        }
         public async Task<(bool Success, string Message)> DeleteUserAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
@@ -162,6 +185,43 @@ namespace Src.Services
             var result = await _userManager.DeleteAsync(user);
             return result.Succeeded ? (true, "User deleted successfully.") : (false, "Failed to delete user.");
         }
+
+
+        public async Task<IdentityResult> AddUserAsync(AddUser addUserDto)
+        {
+            // Tạo đối tượng người dùng mới
+            var user = new AppUser
+            {
+                UserName = addUserDto.Username,
+                Email = addUserDto.Email,
+
+            };
+
+            // Tạo người dùng với mật khẩu
+            var result = await _userManager.CreateAsync(user, addUserDto.Password);
+            if (!result.Succeeded) return result;
+
+            // Kiểm tra và gán vai trò cho người dùng nếu role hợp lệ
+            var selectedRole = addUserDto.Role;
+            if (!await _roleManager.RoleExistsAsync(selectedRole))
+            {
+                await _roleManager.CreateAsync(new IdentityRole(selectedRole));
+            }
+            await _userManager.AddToRoleAsync(user, selectedRole);
+
+            // Thêm trạng thái hoạt động vào bảng Actives
+            var activeStatus = new Actives
+            {
+                AppUserID = user.Id,
+                // StatusName = addUserDto.StatusName 
+                StatusName = "Y"  // Mặc định là "Y" cho trạng thái hoạt động
+            };
+            _context.Actives.Add(activeStatus);
+            await _context.SaveChangesAsync();
+
+            return result;
+        }
+
 
     }
 }

@@ -16,12 +16,12 @@ namespace Src.Dtos.Post
         public int? CategoryID { get; set; }
         public int? TagID { get; set; }
         public string Title { get; set; } = string.Empty; 
-        public string? Content { get; set; }
+        public string Content { get; set; } = string.Empty; 
         public DateTime PublishedDate { get; set; }
-        public string? Image { get; set; }
+        public string Image { get; set; } = string.Empty; 
         public int Views { get; set; }
         
-         public string? Description { get; set; }
+         public string Description { get; set; } = string.Empty; 
         //relationship
         public CategoryDto? Category { get; set; }
         public TagDto? Tag { get; set; }

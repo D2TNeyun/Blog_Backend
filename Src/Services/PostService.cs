@@ -114,11 +114,11 @@ namespace Src.Services
                     CategoryID = post.CategoryID,
                     TagID = post.TagID,
                     Title = post.Title,
-                    Description = post.Description,
-                    Content = post.Content,
+                    Description = post.Description ?? string.Empty,
+                    Content = post.Content ?? string.Empty,
                     PublishedDate = post.PublishedDate,
                     Views = post.Views,
-                    Image = post.Image,
+                    Image = post.Image ?? string.Empty,
                     AppUser = _mapper.Map<UserDto>(await _userManager.FindByIdAsync(post.AppUserID)),
                     Category = _mapper.Map<CategoryDto>(await _context.Categories.FindAsync(post.CategoryID)),
                     Tag = _mapper.Map<TagDto>(await _context.Tags.FindAsync(post.TagID))
@@ -146,11 +146,11 @@ namespace Src.Services
                 CategoryID = post.CategoryID,
                 TagID = post.TagID,
                 Title = post.Title,
-                Description = post.Description,
-                Content = post.Content,
+                Description = post.Description ?? string.Empty,
+                Content = post.Content ?? string.Empty,
                 PublishedDate = post.PublishedDate,
                 Views = post.Views,
-                Image = post.Image,
+                Image = post.Image ?? string.Empty,
                 AppUser = _mapper.Map<UserDto>(await _userManager.FindByIdAsync(post.AppUserID)),
                 Category = _mapper.Map<CategoryDto>(await _context.Categories.FindAsync(post.CategoryID)),
                 Tag = _mapper.Map<TagDto>(await _context.Tags.FindAsync(post.TagID)),
@@ -169,20 +169,17 @@ namespace Src.Services
             {
                 throw new ArgumentException("Post not found.");
             }
-
-            // Cập nhật các trường thông tin post
-            post.CategoryID = postDto.CategoryID;
-            post.TagID = postDto.TagID;
-            post.Title = postDto.Title;
-            post.Description = postDto.Description;
-            post.Content = postDto.Content;
+            // Chỉ cập nhật các trường nếu có dữ liệu mới không rỗng hoặc null
+            post.CategoryID = postDto.CategoryID ?? post.CategoryID;
+            post.TagID = postDto.TagID ?? post.TagID;
+            post.Title = !string.IsNullOrEmpty(postDto.Title) ? postDto.Title : post.Title;
+            post.Description = !string.IsNullOrEmpty(postDto.Description) ? postDto.Description : post.Description;
+            post.Content = !string.IsNullOrEmpty(postDto.Content) ? postDto.Content : post.Content;
 
             try
             {
-                // Nếu có ảnh mới, tải ảnh lên Cloudinary
                 if (image != null)
                 {
-                    // Xóa ảnh cũ trên Cloudinary nếu tồn tại
                     if (!string.IsNullOrEmpty(post.Image))
                     {
                         await _cloudinary.DeleteUploadMappingAsync(post.Image.Split('/').Last());
@@ -202,14 +199,11 @@ namespace Src.Services
                         uploadResult = await _cloudinary.UploadAsync(uploadParams);
                     }
 
-                    // Lưu đường dẫn ảnh mới vào cơ sở dữ liệu
                     post.Image = uploadResult.SecureUrl.AbsoluteUri;
                 }
 
-                // Lưu thay đổi vào cơ sở dữ liệu
                 await _context.SaveChangesAsync();
 
-                // Trả về PostDto sau khi cập nhật
                 var updatedPostDto = _mapper.Map<PostDto>(post);
                 return updatedPostDto;
             }
@@ -223,20 +217,25 @@ namespace Src.Services
         public async Task DeletePostAsync(int postId)
         {
             // Tìm post cần xóa
-            var post = await _context.Posts.FindAsync(postId);
+            var post = await _context.Posts.Include(p => p.Comments).FirstOrDefaultAsync(p => p.PostID == postId);
             if (post == null)
             {
                 throw new ArgumentException("Post not found.");
             }
+
             // Xóa ảnh trên Cloudinary nếu tồn tại
             if (!string.IsNullOrEmpty(post.Image))
             {
                 await _cloudinary.DeleteUploadMappingAsync(post.Image.Split('/').Last());
             }
+
+            // Xóa tất cả bình luận liên quan
+            var comments = await _context.Comments.Where(c => c.PostId == postId).ToListAsync();
+            _context.Comments.RemoveRange(comments);
+
             // Xóa post vào cơ sở dữ liệu
             _context.Posts.Remove(post);
             await _context.SaveChangesAsync();
-            return;
         }
     }
 

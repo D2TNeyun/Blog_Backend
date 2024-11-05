@@ -9,7 +9,7 @@ namespace Src.Models
     {
          public int ActivesID { get; set; }
         public string? AppUserID  { get; set; }
-        public string? StatusName { get; set; }
+        public string? StatusName { get; set; } 
         public string? Avata  { get; set; }
 
         //relationShip

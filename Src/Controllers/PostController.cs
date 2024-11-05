@@ -34,9 +34,9 @@ namespace Src.Controllers
                     AppUserID = createPostDto.AppUserID,
                     CategoryID = createPostDto.CategoryID,
                     TagID = createPostDto.TagID,
-                    Description = createPostDto.Description,
+                    Description = createPostDto.Description ?? string.Empty,
                     Title = createPostDto.Title,
-                    Content = createPostDto.Content,
+                    Content = createPostDto.Content ?? string.Empty,
                     PublishedDate = DateTime.Now,
                     Views = 0
                 };
@@ -80,20 +80,15 @@ namespace Src.Controllers
         {
             try
             {
-                // Gọi phương thức UpdatePostAsync từ service để cập nhật bài viết
                 var updatedPost = await _postService.UpdatePostAsync(id, postUpdate, Image);
-
-                // Trả về PostDto sau khi cập nhật
-                 return Ok(new { message = "Update successfully",  updatedPost});
+                return Ok(new { message = "Update successfully", updatedPost });
             }
             catch (ArgumentException ex)
             {
-                // Trả về lỗi nếu không tìm thấy post 
                 return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {
-                // Trả về lỗi chung nếu có bất kỳ vấn đề gì trong quá trình cập nhật
                 return StatusCode(500, new { message = "Error updating post: " + ex.Message });
             }
         }

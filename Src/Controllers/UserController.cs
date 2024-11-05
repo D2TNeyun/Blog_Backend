@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Src.Data;
 using Src.Dtos.User;
 using Src.Models;
 using Src.Services;
@@ -14,17 +16,18 @@ namespace Src.Controllers
 {
     [Route("api/user")]
     [ApiController]
-    // [Authorize]
+    //  [Authorize(Roles = "Admin")]
 
-    public class UserController(UserService userService, UserManager<AppUser> userManager) : ControllerBase
+    public class UserController(UserService userService, UserManager<AppUser> userManager, ApplicationDBContext context) : ControllerBase
     {
         private readonly UserService _userService = userService;
         private readonly UserManager<AppUser> _userManager = userManager;
+        private readonly ApplicationDBContext _context = context;
 
         [HttpGet]
-        public async Task<ActionResult<List<AppUser>>> GetUsers()
+        public async Task<ActionResult<List<AppUser>>> GetUsers([FromQuery] UserQuery userQuery)
         {
-            var users = await _userService.GetAllUsersAsync();
+            var users = await _userService.GetAllUsersAsync(userQuery);
             return Ok(new { users });
         }
 
@@ -69,7 +72,13 @@ namespace Src.Controllers
                         return StatusCode(400, "Email is already taken.");
                     }
                 }
-
+                // tìm kiếm bản ghi liên quan trong bảng Actives trước
+                var active = await _context.Actives.FirstOrDefaultAsync(a => a.AppUserID == id);
+                if (active != null)
+                {
+                    _context.Actives.Update(active);
+                    await _context.SaveChangesAsync(); // Lưu thay đổi
+                }
 
                 var (Success, message) = await _userService.UpdateUserAsync(id, update);
                 if (!Success)
@@ -99,10 +108,44 @@ namespace Src.Controllers
                 return NotFound("User not found");
             }
 
-            await _userManager.DeleteAsync(user);
-            await _userService.DeleteUserAsync(id);
-            return Ok(new { message = "User deleted successfully" });
+            // Xóa bản ghi liên quan trong bảng Actives trước
+            var active = await _context.Actives.FirstOrDefaultAsync(a => a.AppUserID == id);
+            if (active != null)
+            {
+                _context.Actives.Remove(active);
+                await _context.SaveChangesAsync(); // Lưu thay đổi
+            }
+
+            // Xóa người dùng
+            var result = await _userManager.DeleteAsync(user);
+            if (result.Succeeded)
+            {
+                return Ok(new { message = "User deleted successfully" });
+            }
+
+            return BadRequest("Failed to delete user");
         }
 
+
+
+        [HttpPost("addUser")]
+        public async Task<IActionResult> AddUser([FromForm] AddUser addUserDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var result = await _userService.AddUserAsync(addUserDto);
+
+            if (result.Succeeded)
+            {
+                return Ok(new { Message = "User created successfully!" });
+            }
+            else
+            {
+                return BadRequest(result.Errors);
+            }
+        }
     }
 }
