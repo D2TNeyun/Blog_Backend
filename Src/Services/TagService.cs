@@ -41,7 +41,7 @@ namespace Src.Services
                     TagName = tag.TagName,
                     CategoryID = tag.CategoryID,
                     // Include other properties if needed
-                    Posts = _mapper.Map<List<PostDto>>(await _context.Posts.Where(p => p.TagID == tag.TagID).ToListAsync())
+                    Posts =  _mapper.Map<List<PostDto>>(await _context.Posts.Where(p => p.TagID == tag.TagID).ToListAsync())
                 });
             }
             return tagDtos;

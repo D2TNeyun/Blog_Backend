@@ -13,8 +13,7 @@ using Src.Services;
 namespace Src.Controllers
 {
     [Route("api/categories")]
-    [ApiController]
-    // [Authorize(Roles = "Admin")]
+
 
     public class CategoryController(CategoryService categoryService) : ControllerBase
     {
@@ -38,6 +37,8 @@ namespace Src.Controllers
             return Ok(new { category });
         }
 
+        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Employee")]
         [HttpPost]
         public async Task<IActionResult> CreateCategory([FromForm] createCategoryDto createCategoryDto)
         {
@@ -48,14 +49,16 @@ namespace Src.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(ex.Message); 
+                return BadRequest(ex.Message);
             }
             catch (Exception)
             {
-                return StatusCode(500, "Đã xảy ra lỗi trong quá trình tạo danh mục."); 
+                return StatusCode(500, "Đã xảy ra lỗi trong quá trình tạo danh mục.");
             }
         }
-
+        
+        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Employee")]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateCategory(int id, [FromForm] UpdateCategoryDto update)
         {
@@ -67,7 +70,8 @@ namespace Src.Controllers
 
             return Ok(UpdateCategory);
         }
-
+        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Employee")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {

@@ -43,7 +43,7 @@ namespace Src.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(string id, [FromForm] UpdateUserDto update)
+        public async Task<IActionResult> UpdateUser(string id, [FromForm] UpdateUserDto update, IFormFile? Image)
         {
             try
             {
@@ -80,7 +80,7 @@ namespace Src.Controllers
                     await _context.SaveChangesAsync(); // Lưu thay đổi
                 }
 
-                var (Success, message) = await _userService.UpdateUserAsync(id, update);
+                var (Success, message) = await _userService.UpdateUserAsync(id, update, Image);
                 if (!Success)
                 {
                     return BadRequest(new { message });
@@ -126,8 +126,6 @@ namespace Src.Controllers
             return BadRequest("Failed to delete user");
         }
 
-
-
         [HttpPost("addUser")]
         public async Task<IActionResult> AddUser([FromForm] AddUser addUserDto)
         {
@@ -147,5 +145,7 @@ namespace Src.Controllers
                 return BadRequest(result.Errors);
             }
         }
+
+       
     }
 }

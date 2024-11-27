@@ -13,5 +13,6 @@ namespace Src.Dtos.User
         public string? Email { get; set; } 
          public IList<string>? Roles { get; set; }
          public IList<string>? IsActives { get; set;}
+         public string? Avata { get; set; }
     }
 }

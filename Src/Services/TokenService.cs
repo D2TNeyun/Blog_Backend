@@ -30,6 +30,7 @@ namespace Src.Services
             {
                 new(JwtRegisteredClaimNames.Email, user?.Email ?? ""),
                 new(JwtRegisteredClaimNames.GivenName, user?.UserName ?? ""),
+                new(ClaimTypes.NameIdentifier, user?.Id ?? ""),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new(ClaimTypes.Role, role)
             };

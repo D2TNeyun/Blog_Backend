@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Src.Data;
 
@@ -11,9 +12,11 @@ using Src.Data;
 namespace Src.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241120074720_pageview")]
+    partial class Pageview
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,19 +54,19 @@ namespace Src.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "41c1a612-30e6-4744-a906-1c7cb20652d8",
+                            Id = "526fe916-4e73-44ec-9e8f-a97fa919758c",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "bca89461-0cc1-4786-bde1-940e60aa3e18",
+                            Id = "255215df-d4ab-41bb-a4ed-55c0896dd57b",
                             Name = "User",
                             NormalizedName = "USER"
                         },
                         new
                         {
-                            Id = "41c5659d-73ee-40d4-85ff-41c50c10e1c4",
+                            Id = "dd4b8f4f-71f8-4d1a-8584-902eb7b0b0c6",
                             Name = "Employee",
                             NormalizedName = "EMPLOYEE"
                         });
@@ -328,7 +331,7 @@ namespace Src.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PageViews");
+                    b.ToTable("pageViews");
                 });
 
             modelBuilder.Entity("Src.Models.Post", b =>
@@ -378,40 +381,6 @@ namespace Src.Migrations
                     b.HasIndex("TagID");
 
                     b.ToTable("Posts");
-                });
-
-            modelBuilder.Entity("Src.Models.PostViewHistory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AppUserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("IPAddress")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("PostId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("ViewedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AppUserId");
-
-                    b.HasIndex("PostId");
-
-                    b.ToTable("PostViewHistories");
                 });
 
             modelBuilder.Entity("Src.Models.Tag", b =>
@@ -532,23 +501,6 @@ namespace Src.Migrations
                     b.Navigation("Category");
 
                     b.Navigation("Tag");
-                });
-
-            modelBuilder.Entity("Src.Models.PostViewHistory", b =>
-                {
-                    b.HasOne("Src.Models.AppUser", "AppUser")
-                        .WithMany()
-                        .HasForeignKey("AppUserId");
-
-                    b.HasOne("Src.Models.Post", "Post")
-                        .WithMany()
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AppUser");
-
-                    b.Navigation("Post");
                 });
 
             modelBuilder.Entity("Src.Models.Tag", b =>

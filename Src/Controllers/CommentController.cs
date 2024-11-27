@@ -11,11 +11,11 @@ namespace Src.Controllers
 {
     [Route("api/comments")]
     [ApiController]
-      // [Authorize]
+    // [Authorize]
     public class CommentController(CommentService commentService) : ControllerBase
     {
         private readonly CommentService _commentService = commentService;
-        
+
         [HttpGet]
         public async Task<ActionResult<List<Comment>>> GetComments()
         {
@@ -49,7 +49,7 @@ namespace Src.Controllers
 
                 return Ok(new { comment });
             }
-                    catch (ArgumentException ex)
+            catch (ArgumentException ex)
             {
 
                 return BadRequest(new { message = ex.Message });
@@ -59,6 +59,31 @@ namespace Src.Controllers
                 return StatusCode(500, new { message = ex.Message });
             }
         }
-        
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteComment(int id)
+        {
+            try
+            {
+                await _commentService.DeleteCmtAsync(id);
+                return Ok(new { message = "Delete successfully" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateComment(int id, [FromForm] UpdateCommentDto updateCmt)
+        {
+            var updatedCmt = await _commentService.UpdateCmtAsync(id, updateCmt);
+            if (updatedCmt == null)
+            {
+                return NotFound("Comment not found");
+            }
+            return Ok(updatedCmt);
+        }
+
     }
 }

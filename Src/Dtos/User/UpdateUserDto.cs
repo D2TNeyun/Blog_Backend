@@ -12,6 +12,7 @@ namespace Src.Dtos.User
         public string Email { get; set; }  = string.Empty;
         public string Role  { get; set; }  = string.Empty;
         public string StatusName { get; set; }  = string.Empty;
+        public string Avata { get; set; } = string.Empty;
 
     }
 }

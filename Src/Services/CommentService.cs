@@ -99,9 +99,29 @@ namespace Src.Services
             return comments; // Return the DTO with comment information
         }
 
-
-        // public async Task<CommentsDto> UpdateCmtAsync(int id, UpdateCommentDto updateCommentDto)
-        // {0e502108-1b84-42d0-b996-8475338b7972}
+        public async Task<Comment> UpdateCmtAsync(int id, UpdateCommentDto updateComment)
+        {
+            var comment = await _context.Comments.FindAsync(id);
+            if (comment == null)
+            {
+                throw new ArgumentException("Comment not found.");//+
+            }
+            comment.Content = updateComment.Content;
+            _context.Comments.Update(comment);
+            await _context.SaveChangesAsync();
+            return comment;
+        }
+        public async Task DeleteCmtAsync(int id)
+        {
+            var comment = await _context.Comments.FindAsync(id);
+            if (comment == null)
+            {
+                throw new ArgumentException("Comment not found.");
+            }
+            _context.Comments.Remove(comment);
+            await _context.SaveChangesAsync(); 
+            return;
+        }
 
 
     }

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -14,11 +16,13 @@ using Src.Models;
 
 namespace Src.Services
 {
-    public class UserService(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, ApplicationDBContext Context)
+    public class UserService(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, ApplicationDBContext Context, Cloudinary cloudinary)
     {
         private readonly UserManager<AppUser> _userManager = userManager;
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
         private readonly ApplicationDBContext _context = Context;
+        private readonly Cloudinary _cloudinary = cloudinary;
+
 
 
         public async Task<IEnumerable<UserDto>> GetAllUsersAsync(UserQuery userQuery)
@@ -61,22 +65,34 @@ namespace Src.Services
             }
 
             var roles = await _userManager.GetRolesAsync(user);
+
+            // Retrieve active status and avatar from the 'Actives' table
             var activeStatus = await _context.Actives
-                    .Where(a => a.AppUserID == user.Id && a.StatusName != null)
-                    .Select(a => a.StatusName!)
-                    .ToListAsync();
+                .Where(a => a.AppUserID == user.Id)
+                .Select(a => new { a.StatusName, a.Avata })
+                .FirstOrDefaultAsync();
+
+            if (activeStatus == null)
+            {
+                // Log thông tin để kiểm tra tại sao không tìm thấy Active
+                throw new Exception($"Active status for user with ID {id} not found in database.");
+            }
+
             return new UserDto
             {
                 Id = user.Id,
                 Username = user.UserName ?? string.Empty,
                 Email = user.Email ?? string.Empty,
                 Roles = roles,
-                IsActives = activeStatus
+                IsActives = new List<string> { activeStatus.StatusName ?? "Unknown" }, // Default status
+                Avata = activeStatus.Avata // Avatar URL
             };
         }
 
 
-        public async Task<(bool Success, string Message)> UpdateUserAsync(string userId, UpdateUserDto updateUser)
+
+
+        public async Task<(bool Success, string Message)> UpdateUserAsync(string userId, UpdateUserDto updateUser, IFormFile? avatarImage)
         {
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
@@ -93,7 +109,9 @@ namespace Src.Services
                 if (existingUser != null)
                 {
                     return (false, "Username already exists.");
-                } else {
+                }
+                else
+                {
                     user.UserName = updateUser.UserName;
                 }
             }
@@ -106,12 +124,14 @@ namespace Src.Services
                 if (existingUser != null)
                 {
                     return (false, "Email already exists.");
-                } else {
+                }
+                else
+                {
                     user.Email = updateUser.Email;
                 }
             }
 
-         
+
 
             // Update role if provided
             if (!string.IsNullOrEmpty(updateUser.Role))
@@ -157,6 +177,50 @@ namespace Src.Services
                     }
                     _context.Actives.Update(activeEntry);
                 }
+
+            //Update avata user 
+            // Upload and update avatar if an image is provided
+            if (avatarImage != null)
+            {
+                var activeEntry = await _context.Actives.FirstOrDefaultAsync(a => a.AppUserID == user.Id);
+
+                // Delete old avatar from Cloudinary if it exists
+                if (activeEntry != null && !string.IsNullOrEmpty(activeEntry.Avata))
+                {
+                    await _cloudinary.DeleteResourcesAsync(activeEntry.Avata.Split('/').Last());
+                }
+
+                // Upload new avatar image to Cloudinary
+                var uploadResult = new ImageUploadResult();
+                using (var stream = avatarImage.OpenReadStream())
+                {
+                    var uploadParams = new ImageUploadParams()
+                    {
+                        File = new FileDescription(avatarImage.FileName, stream),
+                        Folder = "BlogProject",
+                        Transformation = new Transformation().Width(200).Height(200).Crop("fill").Gravity("face")
+                    };
+
+                    uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                }
+
+                // Update or add avatar path in database
+                if (activeEntry != null)
+                {
+                    activeEntry.Avata = uploadResult.SecureUrl.AbsoluteUri;
+                    _context.Actives.Update(activeEntry);
+                }
+                else
+                {
+                    activeEntry = new Actives
+                    {
+                        AppUserID = user.Id,
+                        Avata = uploadResult.SecureUrl.AbsoluteUri,
+                        StatusName = updateUser.StatusName // Optional: Add any default status name if needed
+                    };
+                    await _context.Actives.AddAsync(activeEntry);
+                }
+            }
 
             // Attempt to update the user
             var result = await _userManager.UpdateAsync(user);

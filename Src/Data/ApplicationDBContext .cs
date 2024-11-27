@@ -7,11 +7,13 @@ namespace Src.Data
 {
     public class ApplicationDBContext(DbContextOptions options) : IdentityDbContext<AppUser>(options)
     {
-        public DbSet<Post> Posts { get; set; }
-        public DbSet<Category> Categories { get; set; }
-        public DbSet<Tag> Tags { get; set; }
-        public DbSet<Comment> Comments { get; set; }
-        public DbSet<Actives> Actives { get; set;}
+        public required DbSet<Post> Posts { get; set; }
+        public required DbSet<Category> Categories { get; set; }
+        public required DbSet<Tag> Tags { get; set; }
+        public required DbSet<Comment> Comments { get; set; }
+        public required DbSet<Actives> Actives { get; set;}
+        public required DbSet<PageView> PageViews { get; set; }
+        public required DbSet<PostViewHistory> PostViewHistories { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -66,6 +68,11 @@ namespace Src.Data
                 e.HasOne(a => a.AppUser)
                    .WithMany(u => u.IsActive)
                    .HasForeignKey(a => a.AppUserID);
+            });
+
+            modelBuilder.Entity<PostViewHistory>( e => 
+            {
+                e.HasKey(p => p.Id );
             });
 
             List<IdentityRole> roles = new()

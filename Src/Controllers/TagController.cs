@@ -17,17 +17,29 @@ namespace Src.Controllers
         public readonly TagService _tagService = tagService;
 
         [HttpPost]
-        public async Task<ActionResult> CreateTag([FromForm] CreateTagDto createTagDto)
+        public async Task<ActionResult<TagDto>> CreateTag([FromForm] CreateTagDto createTagDto)
         {
+            // Tạo tag mới thông qua dịch vụ
             var newTag = await _tagService.CreateTagAsync(createTagDto);
-            return Ok(newTag);
+
+            // Chuyển đổi đối tượng Tag thành TagDto
+            var tagDto = new TagDto
+            {
+                TagID = newTag.TagID,
+                TagName = newTag.TagName,
+                CategoryID = newTag.CategoryID
+            };
+
+            // Trả về TagDto thay vì Tag
+            return Ok(tagDto);
         }
+
 
         [HttpGet]
         public async Task<ActionResult<List<Tag>>> GetTags()
         {
             var tags = await _tagService.GetTagsAsync();
-            return Ok(new {tags});
+            return Ok(new { tags });
         }
 
         [HttpGet("{id}")]
@@ -41,10 +53,10 @@ namespace Src.Controllers
             return Ok(new { tag });
         }
         [HttpPut("{id}")]
-        public async Task<ActionResult> UpdateTag(int id,[FromForm] TagUpdateDto tagUpdate)
+        public async Task<ActionResult> UpdateTag(int id, [FromForm] TagUpdateDto tagUpdate)
         {
-            var UpdateTag = await _tagService.UpdateTagAsync(id, tagUpdate );
-            if(UpdateTag == null)
+            var UpdateTag = await _tagService.UpdateTagAsync(id, tagUpdate);
+            if (UpdateTag == null)
             {
                 return NotFound();
             }

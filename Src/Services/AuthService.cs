@@ -94,29 +94,34 @@ namespace Src.Services
             {
                 return (false, "Invalid username or password.", null, new UserDto());
             }
-            if (user != null && await _userManager.CheckPasswordAsync(user, loginDto.Password))
+
+            var activeStatus = await _context.Actives
+                .Where(a => a.AppUserID == user.Id)
+                .Select(a => new { a.StatusName, a.Avata })
+                .FirstOrDefaultAsync();
+
+            if (activeStatus?.StatusName == "D")
             {
-                var token = _tokenService.GenerateToken(user, (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? string.Empty);
-                // Lấy thông tin trạng thái active của người dùng
-                var activeStatus = await _context.Actives
-                    .Where(a => a.AppUserID == user.Id && a.StatusName != null)  
-                    .Select(a => a.StatusName!)
-                    .ToListAsync();
-
-                var UserInfor = new UserDto
-                {
-                    Id = user.Id,
-                    Username = user.UserName ?? string.Empty,
-                    Email = user.Email ?? string.Empty,
-                    Roles = await _userManager.GetRolesAsync(user),
-                    IsActives = activeStatus
-                };
-
-                return (true, "Login successful.", token, UserInfor);
+                return (false, "Your account is disabled. Please contact support.", null, new UserDto());
             }
 
-            return (false, "Failed to generate token.", null, new UserDto());
+            var token = _tokenService.GenerateToken(user, (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? string.Empty);
+
+            // Prepare user information
+            var userInfor = new UserDto
+            {
+                Id = user.Id,
+                Username = user.UserName ?? string.Empty,
+                Email = user.Email ?? string.Empty,
+                Roles = await _userManager.GetRolesAsync(user),
+                Avata = activeStatus?.Avata,
+                IsActives = new List<string> { activeStatus?.StatusName ?? "Unknown" }, // Default to "Unknown" if no status found
+            };
+
+            return (true, "Login successful.", token, userInfor);
         }
+
+
 
     }
 }
