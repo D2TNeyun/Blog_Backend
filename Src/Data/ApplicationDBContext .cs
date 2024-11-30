@@ -7,13 +7,13 @@ namespace Src.Data
 {
     public class ApplicationDBContext(DbContextOptions options) : IdentityDbContext<AppUser>(options)
     {
-        public required DbSet<Post> Posts { get; set; }
-        public required DbSet<Category> Categories { get; set; }
-        public required DbSet<Tag> Tags { get; set; }
-        public required DbSet<Comment> Comments { get; set; }
-        public required DbSet<Actives> Actives { get; set;}
-        public required DbSet<PageView> PageViews { get; set; }
-        public required DbSet<PostViewHistory> PostViewHistories { get; set; }
+        public  DbSet<Post>?  Posts { get; set; }
+        public  DbSet<Category>? Categories { get; set; }
+        public  DbSet<Tag>? Tags { get; set; }
+        public  DbSet<Comment>? Comments { get; set; }
+        public  DbSet<Actives>? Actives { get; set; }
+        public  DbSet<PageView>? PageViews { get; set; }
+        public  DbSet<PostViewHistory>? PostViewHistories { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -42,7 +42,7 @@ namespace Src.Data
             modelBuilder.Entity<Comment>(e =>
             {
                 e.HasKey(cmt => new { cmt.CommentId });
-                
+
                 e.HasOne(cmt => cmt.Post)
                    .WithMany(p => p.Comments)
                    .HasForeignKey(cmt => cmt.PostId)
@@ -53,14 +53,11 @@ namespace Src.Data
                    .HasForeignKey(cmt => cmt.AppUserID);
             });
 
-            modelBuilder.Entity<Tag>(e =>
-            {
-                e.HasKey(t => t.TagID);
-                e.HasOne(t => t.Category)
-                .WithMany(c => c.Tags)
-                   .HasForeignKey(t => t.CategoryID);
-    
-            });
+            modelBuilder.Entity<Tag>()
+                    .HasOne(t => t.Category)
+                    .WithMany(c => c.Tags)
+                    .HasForeignKey(t => t.CategoryID)
+                    .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Actives>(e =>
             {
@@ -70,9 +67,9 @@ namespace Src.Data
                    .HasForeignKey(a => a.AppUserID);
             });
 
-            modelBuilder.Entity<PostViewHistory>( e => 
+            modelBuilder.Entity<PostViewHistory>(e =>
             {
-                e.HasKey(p => p.Id );
+                e.HasKey(p => p.Id);
             });
 
             List<IdentityRole> roles = new()

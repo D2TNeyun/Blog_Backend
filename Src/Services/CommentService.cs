@@ -20,6 +20,10 @@ namespace Src.Services
 
         public async Task<IEnumerable<CommentsDto>> GetAllCmtAsync()
         {
+            if (_context.Comments == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
+            }
             var comments = await _context.Comments
             .Include(c => c.AppUser)
             .ToListAsync();
@@ -41,6 +45,10 @@ namespace Src.Services
 
         public async Task<CommentsDto?> GetCmtByIdAsync(int id)
         {
+            if (_context.Comments == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
+            }
             var comment = await _context.Comments.FindAsync(id);
             if (comment == null)
             {
@@ -64,6 +72,10 @@ namespace Src.Services
             var appUser = await _userManager.FindByIdAsync(comments.AppUserID);
 
             // Check if the post exists
+            if (_context.Posts == null)
+            {
+                throw new InvalidOperationException("post statuses data source is unavailable.");
+            }
             var post = await _context.Posts.FindAsync(comments.PostId);
 
             if (appUser == null || post == null)
@@ -73,6 +85,10 @@ namespace Src.Services
 
             try
             {
+                if (_context.Comments == null)
+                {
+                    throw new InvalidOperationException("comments statuses data source is unavailable.");
+                }
                 // Create a new comment
                 var comment = new Comment
                 {
@@ -101,11 +117,11 @@ namespace Src.Services
 
         public async Task<Comment> UpdateCmtAsync(int id, UpdateCommentDto updateComment)
         {
-            var comment = await _context.Comments.FindAsync(id);
-            if (comment == null)
+            if (_context.Comments == null)
             {
-                throw new ArgumentException("Comment not found.");//+
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
             }
+            var comment = await _context.Comments.FindAsync(id) ?? throw new ArgumentException("Comment not found.");
             comment.Content = updateComment.Content;
             _context.Comments.Update(comment);
             await _context.SaveChangesAsync();
@@ -113,13 +129,13 @@ namespace Src.Services
         }
         public async Task DeleteCmtAsync(int id)
         {
-            var comment = await _context.Comments.FindAsync(id);
-            if (comment == null)
+            if (_context.Comments == null)
             {
-                throw new ArgumentException("Comment not found.");
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
             }
+            var comment = await _context.Comments.FindAsync(id) ?? throw new ArgumentException("Comment not found.");
             _context.Comments.Remove(comment);
-            await _context.SaveChangesAsync(); 
+            await _context.SaveChangesAsync();
             return;
         }
 

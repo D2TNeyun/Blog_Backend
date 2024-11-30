@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 using Src.Dtos.Tag;
@@ -11,11 +12,11 @@ using Src.Services;
 namespace Src.Controllers
 {
     [Route("api/tag")]
-    [ApiController]
     public class TagController(TagService tagService) : ControllerBase
     {
         public readonly TagService _tagService = tagService;
 
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<ActionResult<TagDto>> CreateTag([FromForm] CreateTagDto createTagDto)
         {
@@ -52,6 +53,8 @@ namespace Src.Controllers
             }
             return Ok(new { tag });
         }
+
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<ActionResult> UpdateTag(int id, [FromForm] TagUpdateDto tagUpdate)
         {
@@ -63,6 +66,8 @@ namespace Src.Controllers
             return Ok(UpdateTag);
         }
 
+
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteTag(int id)
         {

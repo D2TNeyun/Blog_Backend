@@ -37,8 +37,7 @@ namespace Src.Controllers
             return Ok(new { category });
         }
 
-        [Authorize(Roles = "Admin")]
-        [Authorize(Roles = "Employee")]
+        [Authorize(Roles = "Admin,Employee")]
         [HttpPost]
         public async Task<IActionResult> CreateCategory([FromForm] createCategoryDto createCategoryDto)
         {
@@ -56,9 +55,8 @@ namespace Src.Controllers
                 return StatusCode(500, "Đã xảy ra lỗi trong quá trình tạo danh mục.");
             }
         }
-        
-        [Authorize(Roles = "Admin")]
-        [Authorize(Roles = "Employee")]
+
+        [Authorize(Roles = "Admin,Employee")]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateCategory(int id, [FromForm] UpdateCategoryDto update)
         {
@@ -70,18 +68,28 @@ namespace Src.Controllers
 
             return Ok(UpdateCategory);
         }
-        [Authorize(Roles = "Admin")]
-        [Authorize(Roles = "Employee")]
+
+
+        [Authorize(Roles = "Admin,Employee")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
-            var category = await _categoryService.DeleteCategoryAsync(id);
-            if (!category)
+            // Kiểm tra xem danh mục có tồn tại không
+            var category = await _categoryService.GetCategoryByIdAsync(id);
+            if (category == null)
             {
-                return NotFound();
+                return NotFound(new { message = "Category not found." });
             }
 
-            return Ok(new { message = "Category deleted successfully." });
+            // Xóa các tags liên quan đến danh mục
+            var isDeleted = await _categoryService.DeleteCategoryAsync(id);
+            if (!isDeleted)
+            {
+                return BadRequest(new { message = "Failed to delete the category and its related tags." });
+            }
+
+            return Ok(new { message = "Category and related tags deleted successfully." });
         }
+
     }
 }

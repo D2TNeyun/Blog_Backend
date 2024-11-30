@@ -24,6 +24,7 @@ namespace Src.Controllers
         private readonly UserManager<AppUser> _userManager = userManager;
         private readonly ApplicationDBContext _context = context;
 
+
         [HttpGet]
         public async Task<ActionResult<List<AppUser>>> GetUsers([FromQuery] UserQuery userQuery)
         {
@@ -73,6 +74,10 @@ namespace Src.Controllers
                     }
                 }
                 // tìm kiếm bản ghi liên quan trong bảng Actives trước
+                if (_context.Actives == null)
+                {
+                    throw new InvalidOperationException("comments statuses data source is unavailable.");
+                }
                 var active = await _context.Actives.FirstOrDefaultAsync(a => a.AppUserID == id);
                 if (active != null)
                 {
@@ -109,6 +114,10 @@ namespace Src.Controllers
             }
 
             // Xóa bản ghi liên quan trong bảng Actives trước
+            if (_context.Actives == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
+            }
             var active = await _context.Actives.FirstOrDefaultAsync(a => a.AppUserID == id);
             if (active != null)
             {
@@ -146,6 +155,6 @@ namespace Src.Controllers
             }
         }
 
-       
+
     }
 }

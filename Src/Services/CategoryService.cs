@@ -22,6 +22,10 @@ namespace Src.Services
         public async Task<Category> CreateCategoryAsync(createCategoryDto createCategoryDto)
         {
             // Kiểm tra xem danh mục đã tồn tại hay chưa
+            if (_context.Categories == null)
+            {
+                throw new InvalidOperationException("Categories statuses data source is unavailable.");
+            }
             var existingCategory = await _context.Categories
                 .FirstOrDefaultAsync(c => c.CategoryName == createCategoryDto.CategoryName);
 
@@ -29,7 +33,7 @@ namespace Src.Services
             {
                 throw new InvalidOperationException("Danh mục với tên này đã tồn tại.");
             }
-            
+
             var category = new Category
             {
                 CategoryName = createCategoryDto.CategoryName
@@ -42,15 +46,22 @@ namespace Src.Services
 
         public async Task<List<CategoryDto>> GetAllCategories()
         {
+            if (_context.Categories == null)
+            {
+                throw new InvalidOperationException("Categories statuses data source is unavailable.");
+            }
             var categories = await _context.Categories
-                .Include(c => c.Tags) // Bao gồm các Tag liên quan
-                                      // .Include(c => c.Posts)  // Bao gồm bảng Post
+                .Include(c => c.Tags)
                 .ToListAsync();
             return _mapper.Map<List<CategoryDto>>(categories);
         }
 
         public async Task<CategoryDto?> GetCategoryByIdAsync(int id)
         {
+            if (_context.Categories == null)
+            {
+                throw new InvalidOperationException("Categories statuses data source is unavailable.");
+            }
             var category = await _context.Categories
                     .Include(c => c.Tags)
                     .Include(c => c.Posts)
@@ -68,6 +79,10 @@ namespace Src.Services
 
         public async Task<Category?> UpdateCategoryAsync(int id, UpdateCategoryDto categoryDto)
         {
+            if (_context.Categories == null)
+            {
+                throw new InvalidOperationException("Categories statuses data source is unavailable.");
+            }
             var category = await _context.Categories.FindAsync(id);
             if (category == null)
             {
@@ -83,14 +98,31 @@ namespace Src.Services
 
         public async Task<bool> DeleteCategoryAsync(int id)
         {
+            if (_context.Categories == null)
+            {
+                throw new InvalidOperationException("Categories statuses data source is unavailable.");
+            }
+            // Tìm danh mục theo ID
             var category = await _context.Categories.FindAsync(id);
+
             if (category == null)
             {
                 return false;
             }
+
+            if (_context.Tags == null)
+            {
+                throw new InvalidOperationException("Tags data source is unavailable.");
+            }
+            var tags = await _context.Tags.Where(t => t.CategoryID == id).ToListAsync();
+
+            _context.Tags.RemoveRange(tags);
             _context.Categories.Remove(category);
-            await _context.SaveChangesAsync();
-            return true;
+
+            // Lưu thay đổi
+            return await _context.SaveChangesAsync() > 0;
         }
+
+
     }
 }

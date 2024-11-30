@@ -19,6 +19,10 @@ namespace Src.Services
 
         public async Task<Tag> CreateTagAsync(CreateTagDto createTagDto)
         {
+            if (_context.Tags == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
+            }
             var tag = new Tag
             {
                 CategoryID = createTagDto.CategoryID,
@@ -31,6 +35,10 @@ namespace Src.Services
 
         public async Task<IEnumerable<TagDto>> GetTagsAsync()
         {
+            if (_context.Tags == null || _context.Posts == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
+            }
             var tags = await _context.Tags.ToListAsync();
             var tagDtos = new List<TagDto>();
             foreach (var tag in tags)
@@ -41,7 +49,7 @@ namespace Src.Services
                     TagName = tag.TagName,
                     CategoryID = tag.CategoryID,
                     // Include other properties if needed
-                    Posts =  _mapper.Map<List<PostDto>>(await _context.Posts.Where(p => p.TagID == tag.TagID).ToListAsync())
+                    Posts = _mapper.Map<List<PostDto>>(await _context.Posts.Where(p => p.TagID == tag.TagID).ToListAsync())
                 });
             }
             return tagDtos;
@@ -50,6 +58,10 @@ namespace Src.Services
 
         public async Task<TagDto?> GetTagByIdAsync(int id)
         {
+            if (_context.Tags == null || _context.Posts == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
+            }
             var tag = await _context.Tags.FindAsync(id);
             if (tag == null)
             {
@@ -71,6 +83,10 @@ namespace Src.Services
 
         public async Task<Tag?> UpdateTagAsync(int id, TagUpdateDto tagUpdate)
         {
+            if (_context.Tags == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
+            }
             var tag = await _context.Tags.FindAsync(id);
             if (tag == null)
             {
@@ -85,6 +101,10 @@ namespace Src.Services
 
         public async Task<bool> DeleteTagAsync(int id)
         {
+            if (_context.Tags == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
+            }
             var tag = await _context.Tags.FindAsync(id);
             if (tag == null)
             {

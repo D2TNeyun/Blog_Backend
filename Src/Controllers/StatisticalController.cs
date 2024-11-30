@@ -20,6 +20,10 @@ namespace Src.Controllers
         [HttpGet("overview")]
         public async Task<IActionResult> GetDashboardOverview()
         {
+            if (_context.Comments == null || _context.Posts == null || _context.PageViews == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
+            }
             var totalPosts = await _context.Posts.CountAsync();
             var totalUsers = await _userManager.Users.CountAsync();
             var totalComments = await _context.Comments.CountAsync();
@@ -41,6 +45,10 @@ namespace Src.Controllers
             if (string.IsNullOrEmpty(pageName))
             {
                 return BadRequest("Page name is required.");
+            }
+            if (_context.PageViews == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
             }
 
             var today = DateTime.UtcNow.Date;
@@ -71,6 +79,10 @@ namespace Src.Controllers
         [HttpGet("stats")]
         public async Task<IActionResult> GetPageViewsStats(string timeRange = "weekly", DateTime? startDate = null, DateTime? endDate = null)
         {
+            if (_context.PageViews == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
+            }
             IQueryable<PageView> query = _context.PageViews;
 
             if (startDate.HasValue && endDate.HasValue)

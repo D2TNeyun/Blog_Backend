@@ -61,11 +61,15 @@ namespace Src.Services
                     Message = $"Failed to assign role to user: {string.Join(", ", roleResult.Errors.Select(e => e.Description))}"
                 };
             }
+            if (_context.Actives == null)
+            {
+                throw new InvalidOperationException("Active statuses data source is unavailable.");
+            }
             // Tạo trạng thái hoạt động mặc định cho người dùng mới
             var active = new Actives
             {
                 AppUserID = user.Id,
-                StatusName = "Y",  // Trạng thái mặc định là "Y"
+                StatusName = "Y",  
             };
 
             _context.Actives.Add(active);
@@ -93,6 +97,10 @@ namespace Src.Services
             if (user == null || !await _userManager.CheckPasswordAsync(user, loginDto.Password))
             {
                 return (false, "Invalid username or password.", null, new UserDto());
+            }
+            if (_context.Actives == null)
+            {
+                throw new InvalidOperationException("Active statuses data source is unavailable.");
             }
 
             var activeStatus = await _context.Actives

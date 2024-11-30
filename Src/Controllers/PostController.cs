@@ -16,15 +16,15 @@ using Src.Services;
 namespace Src.Controllers
 {
     [Route("api/post")]
-    
+
     public class PostController(PostService postService, ApplicationDBContext context) : ControllerBase
     {
         private readonly PostService _postService = postService;
         private readonly ApplicationDBContext _context = context;
         // private readonly IPostService _postServices = postServices;
 
-        [Authorize(Roles = "Admin")]
-        [Authorize(Roles = "Employee")]
+        [Authorize(Roles = "Admin,Employee")]
+
         [HttpPost("create")]
         public async Task<ActionResult<Post>> CreatePost([FromForm] CreatePostDto createPostDto)
         {
@@ -78,8 +78,7 @@ namespace Src.Controllers
             return Ok(new { post });
         }
 
-        [Authorize(Roles = "Admin")]
-        [Authorize(Roles = "Employee")]
+        [Authorize(Roles = "Admin,Employee")]
         [HttpPut("{id}")]
         public async Task<ActionResult> UpdatePost(int id, [FromForm] PostUpdateDto postUpdate, IFormFile? Image)
         {
@@ -98,8 +97,7 @@ namespace Src.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin")]
-        [Authorize(Roles = "Employee")]
+        [Authorize(Roles = "Admin,Employee")]
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeletePost(int id)
         {
@@ -123,6 +121,10 @@ namespace Src.Controllers
             var now = DateTime.UtcNow;
 
             // Kiểm tra bài viết
+            if (_context.PostViewHistories == null || _context.Posts == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
+            }
             var post = await _context.Posts.FirstOrDefaultAsync(p => p.PostID == postId);
             if (post == null)
                 return NotFound(new { Message = "Post not found." });
@@ -159,6 +161,10 @@ namespace Src.Controllers
         [HttpGet("viewHistories/all")]
         public async Task<ActionResult<IEnumerable<PostViewHistory>>> GetAllPostViewHistories()
         {
+            if (_context.PostViewHistories == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
+            }
             var viewHistories = await _context.PostViewHistories.ToListAsync();
             return Ok(new { viewHistories });
         }

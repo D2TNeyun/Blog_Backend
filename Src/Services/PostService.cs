@@ -29,8 +29,13 @@ namespace Src.Services
         public async Task<PostDto> CreatePostAsync(PostDto postDto, IFormFile image)
         {
             // Kiểm tra nếu không có AppUserID hoặc CategoryID hợp lệ
+            if (_context.Categories == null || _context.Posts == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
+            }
             var appUser = await _userManager.FindByIdAsync(postDto.AppUserID);
             var category = await _context.Categories.FindAsync(postDto.CategoryID);
+
 
             if (appUser == null || category == null)
             {
@@ -99,6 +104,10 @@ namespace Src.Services
 
         public async Task<IEnumerable<PostDto>> GetAllPostsAsync(PostQuery postQuery)
         {
+            if (_context.Categories == null || _context.Posts == null || _context.Tags == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
+            }
             var posts = await _context.Posts.ToListAsync();
             if (!string.IsNullOrWhiteSpace(postQuery.Title))
             {
@@ -133,6 +142,10 @@ namespace Src.Services
 
         public async Task<PostDto?> GetPostByIdAsync(int postId)
         {
+            if (_context.Comments == null || _context.Categories == null || _context.Posts == null || _context.Tags == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
+            }
             var post = await _context.Posts.FindAsync(postId);
             if (post == null)
             {
@@ -164,6 +177,10 @@ namespace Src.Services
         public async Task<PostDto> UpdatePostAsync(int postId, PostUpdateDto postDto, IFormFile? image)
         {
             // Tìm post cần cập nhật
+            if (_context.Posts == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
+            }
             var post = await _context.Posts.FindAsync(postId);
             if (post == null)
             {
@@ -217,6 +234,10 @@ namespace Src.Services
         public async Task DeletePostAsync(int postId)
         {
             // Tìm post cần xóa
+            if (_context.Posts == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
+            }
             var post = await _context.Posts.Include(p => p.Comments).FirstOrDefaultAsync(p => p.PostID == postId);
             if (post == null)
             {
@@ -230,6 +251,10 @@ namespace Src.Services
             }
 
             // Xóa tất cả bình luận liên quan
+            if (_context.Comments == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
+            }
             var comments = await _context.Comments.Where(c => c.PostId == postId).ToListAsync();
             _context.Comments.RemoveRange(comments);
 

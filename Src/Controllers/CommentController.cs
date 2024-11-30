@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Src.Dtos.Comment;
 using Src.Models;
@@ -34,6 +35,7 @@ namespace Src.Controllers
             return Ok(new { comment });
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> CreateComment([FromForm] CreateCmtDto createCmt)
         {
@@ -59,7 +61,7 @@ namespace Src.Controllers
                 return StatusCode(500, new { message = ex.Message });
             }
         }
-
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteComment(int id)
         {
@@ -74,6 +76,7 @@ namespace Src.Controllers
             }
         }
 
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateComment(int id, [FromForm] UpdateCommentDto updateCmt)
         {

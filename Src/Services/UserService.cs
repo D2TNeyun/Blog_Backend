@@ -27,34 +27,51 @@ namespace Src.Services
 
         public async Task<IEnumerable<UserDto>> GetAllUsersAsync(UserQuery userQuery)
         {
+            // Fetch users from database
             var users = await _userManager.Users.ToListAsync();
+
+            // Filter users by UserName if provided
             if (!string.IsNullOrWhiteSpace(userQuery.UserName))
             {
                 users = users
-                    .Where(u => (u.UserName ?? string.Empty).ToLower().Contains(userQuery.UserName.ToLower()))
+                    .Where(u => (u.UserName ?? string.Empty)
+                    .ToLower()
+                    .Contains(userQuery.UserName.ToLower()))
                     .ToList();
             }
+
             var userWithRolesList = new List<UserDto>();
+
             foreach (var user in users)
             {
+                // Retrieve roles for each user
                 var userRoles = await _userManager.GetRolesAsync(user);
 
+                if (_context.Actives == null)
+                {
+                    throw new InvalidOperationException("Active statuses data source is unavailable.");
+                }
+
+                // Retrieve active status for the user
                 var activeStatus = await _context.Actives
                     .Where(a => a.AppUserID == user.Id && a.StatusName != null)
                     .Select(a => a.StatusName!)
                     .ToListAsync();
 
+                // Add user data to result list
                 userWithRolesList.Add(new UserDto
                 {
                     Id = user.Id,
                     Username = user.UserName ?? string.Empty,
                     Email = user.Email ?? string.Empty,
-                    Roles = userRoles ?? throw new ArgumentNullException(nameof(userWithRolesList)),
+                    Roles = userRoles,
                     IsActives = activeStatus
                 });
             }
+
             return userWithRolesList;
         }
+
 
         public async Task<UserDto?> GetUserByIdAsync(string id)
         {
@@ -65,6 +82,10 @@ namespace Src.Services
             }
 
             var roles = await _userManager.GetRolesAsync(user);
+            if (_context.Actives == null)
+            {
+                throw new InvalidOperationException("Active statuses data source is unavailable.");
+            }
 
             // Retrieve active status and avatar from the 'Actives' table
             var activeStatus = await _context.Actives
@@ -154,9 +175,12 @@ namespace Src.Services
 
             // Update active status if provided
             if (!string.IsNullOrEmpty(updateUser.StatusName))
-                // Update active status if provided
                 if (!string.IsNullOrEmpty(updateUser.StatusName))
                 {
+                    if (_context.Actives == null)
+                    {
+                        throw new InvalidOperationException("Active statuses data source is unavailable.");
+                    }
                     // Check if an active entry exists
                     var activeEntry = await _context.Actives
                         .FirstOrDefaultAsync(a => a.AppUserID == user.Id);
@@ -178,10 +202,13 @@ namespace Src.Services
                     _context.Actives.Update(activeEntry);
                 }
 
-            //Update avata user 
             // Upload and update avatar if an image is provided
             if (avatarImage != null)
             {
+                if (_context.Actives == null)
+                {
+                    throw new InvalidOperationException("Active statuses data source is unavailable.");
+                }
                 var activeEntry = await _context.Actives.FirstOrDefaultAsync(a => a.AppUserID == user.Id);
 
                 // Delete old avatar from Cloudinary if it exists
@@ -272,12 +299,14 @@ namespace Src.Services
                 await _roleManager.CreateAsync(new IdentityRole(selectedRole));
             }
             await _userManager.AddToRoleAsync(user, selectedRole);
-
+            if (_context.Actives == null)
+            {
+                throw new InvalidOperationException("Active statuses data source is unavailable.");
+            }
             // Thêm trạng thái hoạt động vào bảng Actives
             var activeStatus = new Actives
             {
                 AppUserID = user.Id,
-                // StatusName = addUserDto.StatusName 
                 StatusName = "Y"  // Mặc định là "Y" cho trạng thái hoạt động
             };
             _context.Actives.Add(activeStatus);
