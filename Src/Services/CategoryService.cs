@@ -10,16 +10,17 @@ using Src.Data;
 using Src.Dtos.Category;
 using Src.Dtos.Post;
 using Src.Dtos.Tag;
+using Src.Mock;
 using Src.Models;
 
 namespace Src.Services
 {
-    public class CategoryService(ApplicationDBContext context, IMapper mapper)
+    public class CategoryService(ApplicationDBContext context, IMapper mapper) : ICategoryService
     {
         public readonly ApplicationDBContext _context = context;
         private readonly IMapper _mapper = mapper;
 
-        public async Task<Category> CreateCategoryAsync(createCategoryDto createCategoryDto)
+        public async Task<Category> CreateCategoryAsync(CreateCategoryDto createCategoryDto)
         {
             // Kiểm tra xem danh mục đã tồn tại hay chưa
             if (_context.Categories == null)
@@ -43,6 +44,8 @@ namespace Src.Services
             await _context.SaveChangesAsync();
             return category;
         }
+
+   
 
         public async Task<List<CategoryDto>> GetAllCategories()
         {

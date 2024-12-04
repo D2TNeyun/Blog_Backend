@@ -14,7 +14,8 @@
     using Src.Config.Mapper;
     using Src.Data;
     using Src.Interface;
-    using Src.Models;
+using Src.Mock;
+using Src.Models;
     using Src.Services;
 
     var builder = WebApplication.CreateBuilder(args);
@@ -183,7 +184,7 @@
     builder.Services.AddScoped<CommentService>();
     builder.Services.AddScoped<CloudinaryService>();
     builder.Services.AddScoped<ITokenService, TokenService>();
-
+    builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 
     var app = builder.Build();

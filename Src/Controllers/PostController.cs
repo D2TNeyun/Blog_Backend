@@ -169,6 +169,20 @@ namespace Src.Controllers
             return Ok(new { viewHistories });
         }
 
+        [HttpGet("statistics-by-day")]
+        public async Task<IActionResult> GetPostStatisticsByDay()
+        {
+            var statistics = await _postService.GetPostStatisticsByDayAsync();
+            return Ok(statistics);
+        }
+
+        [HttpGet("statistics-by-category")]
+        public async Task<IActionResult> GetPostStatisticsByCategory()
+        {
+            var statistics = await _postService.GetPostStatisticsByCategoryAsync();
+            return Ok(statistics);
+        }
+
     }
 
 }

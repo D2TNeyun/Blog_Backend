@@ -262,6 +262,42 @@ namespace Src.Services
             _context.Posts.Remove(post);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<Dictionary<DateTime, int>> GetPostStatisticsByDayAsync()
+        {
+            if (_context.Posts == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
+            }
+            var postStatistics = await _context.Posts
+                .GroupBy(p => p.PublishedDate.Date) // Nhóm theo ngày
+                .Select(g => new
+                {
+                    Date = g.Key,    // Ngày
+                    Count = g.Count() // Số bài viết trong ngày
+                })
+                .ToDictionaryAsync(x => x.Date, x => x.Count);
+
+            return postStatistics;
+        }
+
+        public async Task<Dictionary<string, int>> GetPostStatisticsByCategoryAsync()
+        {
+            if (_context.Posts == null)
+            {
+                throw new InvalidOperationException("comments statuses data source is unavailable.");
+            }
+            var postStatistics = await _context.Posts
+                .GroupBy(p => p.Category != null ? p.Category.CategoryName : "Uncategorized") 
+                .Select(g => new
+                {
+                    CategoryName = g.Key,
+                    Count = g.Count()
+                })
+                .ToDictionaryAsync(x => x.CategoryName, x => x.Count);
+
+            return postStatistics;
+        }
     }
 
 }

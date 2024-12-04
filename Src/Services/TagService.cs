@@ -17,21 +17,34 @@ namespace Src.Services
         public readonly ApplicationDBContext _context = context;
         private readonly IMapper _mapper = mapper;
 
-        public async Task<Tag> CreateTagAsync(CreateTagDto createTagDto)
-        {
-            if (_context.Tags == null)
-            {
-                throw new InvalidOperationException("comments statuses data source is unavailable.");
-            }
-            var tag = new Tag
-            {
-                CategoryID = createTagDto.CategoryID,
-                TagName = createTagDto.TagName,
-            };
-            _context.Tags.Add(tag);
-            await _context.SaveChangesAsync();
-            return tag;
-        }
+       public async Task<Tag> CreateTagAsync(CreateTagDto createTagDto)
+{
+    if (_context.Tags == null)
+    {
+        throw new InvalidOperationException("Tags data source is unavailable.");
+    }
+
+    // Kiểm tra xem tag có trùng lặp không
+    var existingTag = await _context.Tags
+        .FirstOrDefaultAsync(t => t.CategoryID == createTagDto.CategoryID && t.TagName == createTagDto.TagName);
+
+    if (existingTag != null)
+    {
+        throw new InvalidOperationException("Tag name already exists in this category.");
+    }
+
+    // Nếu không trùng lặp, tiếp tục thêm tag mới
+    var tag = new Tag
+    {
+        CategoryID = createTagDto.CategoryID,
+        TagName = createTagDto.TagName,
+    };
+
+    _context.Tags.Add(tag);
+    await _context.SaveChangesAsync();
+    return tag;
+}
+
 
         public async Task<IEnumerable<TagDto>> GetTagsAsync()
         {

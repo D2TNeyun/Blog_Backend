@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Src.Data;
 using Src.Dtos.Category;
+using Src.Mock;
 using Src.Models;
 using Src.Services;
 
@@ -15,9 +16,11 @@ namespace Src.Controllers
     [Route("api/categories")]
 
 
-    public class CategoryController(CategoryService categoryService) : ControllerBase
+    public class CategoryController( ICategoryService categoryService) : ControllerBase
     {
-        public readonly CategoryService _categoryService = categoryService;
+        // public readonly CategoryService _categoryService = categoryService;
+        private readonly ICategoryService _categoryService = categoryService;
+   
 
         [HttpGet]
         public async Task<ActionResult<List<Category>>> GetCategories()
@@ -39,16 +42,25 @@ namespace Src.Controllers
 
         [Authorize(Roles = "Admin,Employee")]
         [HttpPost]
-        public async Task<IActionResult> CreateCategory([FromForm] createCategoryDto createCategoryDto)
+        public async Task<IActionResult> CreateCategory([FromForm] CreateCategoryDto createCategoryDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Dữ liệu không hợp lệ.");
+            }
+
             try
             {
                 var category = await _categoryService.CreateCategoryAsync(createCategoryDto);
                 return Ok(category);
             }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("exists"))
+            {
+                return Conflict(ex.Message); // HTTP 409 nếu danh mục đã tồn tại
+            }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(ex.Message); // HTTP 400 cho lỗi logic khác
             }
             catch (Exception)
             {

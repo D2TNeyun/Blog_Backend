@@ -20,19 +20,38 @@ namespace Src.Controllers
         [HttpPost]
         public async Task<ActionResult<TagDto>> CreateTag([FromForm] CreateTagDto createTagDto)
         {
-            // Tạo tag mới thông qua dịch vụ
-            var newTag = await _tagService.CreateTagAsync(createTagDto);
-
-            // Chuyển đổi đối tượng Tag thành TagDto
-            var tagDto = new TagDto
+            try
             {
-                TagID = newTag.TagID,
-                TagName = newTag.TagName,
-                CategoryID = newTag.CategoryID
-            };
+                // Kiểm tra đầu vào
+                if (createTagDto == null || string.IsNullOrWhiteSpace(createTagDto.TagName))
+                {
+                    return BadRequest("Invalid tag data.");
+                }
 
-            // Trả về TagDto thay vì Tag
-            return Ok(tagDto);
+                // Tạo tag mới thông qua dịch vụ
+                var newTag = await _tagService.CreateTagAsync(createTagDto);
+
+                // Chuyển đổi đối tượng Tag thành TagDto
+                var tagDto = new TagDto
+                {
+                    TagID = newTag.TagID,
+                    TagName = newTag.TagName,
+                    CategoryID = newTag.CategoryID
+                };
+
+                // Trả về TagDto
+                return Ok(tagDto);
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Xử lý lỗi từ dịch vụ
+                return BadRequest(ex.Message);
+            }
+            catch (Exception)
+            {
+                // Xử lý lỗi không xác định
+                return StatusCode(500, "An error occurred while creating the tag.");
+            }
         }
 
 
@@ -71,12 +90,20 @@ namespace Src.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteTag(int id)
         {
-            var tag = await _tagService.DeleteTagAsync(id);
-            if (!tag)
+            try
             {
-                return NotFound();
+                var isDeleted = await _tagService.DeleteTagAsync(id);
+                if (!isDeleted)
+                {
+                    return NotFound("Tag not found.");
+                }
+
+                return Ok("Tag deleted successfully.");
             }
-            return Ok(new { message = "Tag deleted successfully" });
+            catch (Exception)
+            {
+                return StatusCode(500, "An error occurred while deleting the tag.");
+            }
         }
     }
 }
