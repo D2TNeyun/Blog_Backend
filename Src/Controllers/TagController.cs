@@ -98,7 +98,7 @@ namespace Src.Controllers
                     return NotFound("Tag not found.");
                 }
 
-                return Ok("Tag deleted successfully.");
+                return Ok(new {message = "Tag deleted successfully"});
             }
             catch (Exception)
             {

@@ -107,33 +107,64 @@ namespace Src.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(string id)
         {
+             if (_context.Actives == null || _context.Posts == null)
+                {
+                    throw new InvalidOperationException("comments statuses data source is unavailable.");
+                }
+            // Tìm người dùng theo ID
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
-                return NotFound("User not found");
+                return NotFound(new { message = "User not found" });
             }
 
-            // Xóa bản ghi liên quan trong bảng Actives trước
-            if (_context.Actives == null)
-            {
-                throw new InvalidOperationException("comments statuses data source is unavailable.");
-            }
+            // Xóa bản ghi liên quan trong bảng Actives
             var active = await _context.Actives.FirstOrDefaultAsync(a => a.AppUserID == id);
             if (active != null)
             {
                 _context.Actives.Remove(active);
-                await _context.SaveChangesAsync(); // Lưu thay đổi
+                await _context.SaveChangesAsync();
+            }
+
+            // Tìm tài khoản "DeletedUser" (hoặc tạo nếu chưa tồn tại)
+            var deletedUser = await _userManager.FindByNameAsync("DeletedUser");
+            if (deletedUser == null)
+            {
+                deletedUser = new AppUser
+                {
+                    UserName = "DeletedUser",
+                    Email = "deleteduser@example.com",
+                    EmailConfirmed = true
+                };
+
+                var createResult = await _userManager.CreateAsync(deletedUser, "DefaultPassword@123");
+                if (!createResult.Succeeded)
+                {
+                    return BadRequest(new { message = "Failed to create 'DeletedUser' account" });
+                }
+            }
+
+            // Cập nhật các bài viết của người dùng bị xóa
+            var userPosts = _context.Posts.Where(p => p.AppUserID == id);
+            if (userPosts.Any())
+            {
+                foreach (var post in userPosts)
+                {
+                    post.AppUserID = deletedUser.Id; // Gán bài viết cho tài khoản DeletedUser
+                }
+                await _context.SaveChangesAsync(); // Lưu thay đổi trong cơ sở dữ liệu
             }
 
             // Xóa người dùng
             var result = await _userManager.DeleteAsync(user);
             if (result.Succeeded)
             {
-                return Ok(new { message = "User deleted successfully" });
+                return Ok(new { message = "User deleted successfully, posts reassigned to 'DeletedUser'" });
             }
 
-            return BadRequest("Failed to delete user");
+            return BadRequest(new { message = "Failed to delete user" });
         }
+
 
         [HttpPost("addUser")]
         public async Task<IActionResult> AddUser([FromForm] AddUser addUserDto)
